@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, ReactNode } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Ticket, TicketContextType } from "@/types/ticket";
@@ -112,7 +111,6 @@ export const TicketProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const addReply = async (ticketId: string, adminName: string, message: string): Promise<void> => {
     try {
       await createReply(ticketId, adminName, message);
-      
       // No need to update local state as we'll get the update via the real-time subscription
     } catch (error) {
       console.error("Error adding reply:", error);

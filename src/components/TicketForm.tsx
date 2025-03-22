@@ -1,7 +1,6 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useTickets } from "@/contexts/TicketContext";
+import { useTickets } from "@/hooks/useTicketContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,7 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -40,7 +39,6 @@ const TicketForm: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      // Create the ticket object with all required fields
       const ticketData = {
         name: values.name,
         email: values.email,
@@ -52,9 +50,7 @@ const TicketForm: React.FC = () => {
       const ticketId = await addTicket(ticketData);
       
       if (ticketId) {
-        // Clear form
         form.reset();
-        // Navigate to success page with ticket ID
         navigate(`/ticket-submitted?id=${ticketId}`);
       } else {
         throw new Error("Failed to submit ticket");

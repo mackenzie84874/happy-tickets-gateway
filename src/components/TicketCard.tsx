@@ -2,11 +2,11 @@
 import React, { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useTickets } from "@/contexts/TicketContext";
+import { useTickets } from "@/hooks/useTicketContext";
 import { Ticket } from "@/types/ticket";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, CheckCircle } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import TicketReplyDialog from "@/components/admin/TicketReplyDialog";
 
 interface TicketCardProps {

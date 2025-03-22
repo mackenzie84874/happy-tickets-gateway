@@ -1,4 +1,5 @@
 
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -18,52 +19,55 @@ import Navbar from "./components/Navbar";
 import AnimatedTransition from "./components/AnimatedTransition";
 import { TicketProvider } from "./contexts/TicketContext";
 
+// Create a new QueryClient instance
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <TicketProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Navbar />
-          <Routes>
-            <Route path="/" element={
-              <AnimatedTransition>
-                <Index />
-              </AnimatedTransition>
-            } />
-            <Route path="/submit-ticket" element={
-              <AnimatedTransition>
-                <SubmitTicket />
-              </AnimatedTransition>
-            } />
-            <Route path="/ticket-submitted" element={
-              <AnimatedTransition>
-                <TicketSubmitted />
-              </AnimatedTransition>
-            } />
-            <Route path="/admin" element={
-              <AnimatedTransition>
-                <AdminLogin />
-              </AnimatedTransition>
-            } />
-            <Route path="/admin/dashboard" element={
-              <AnimatedTransition>
-                <AdminDashboard />
-              </AnimatedTransition>
-            } />
-            <Route path="*" element={
-              <AnimatedTransition>
-                <NotFound />
-              </AnimatedTransition>
-            } />
-          </Routes>
-        </BrowserRouter>
-      </TicketProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <React.StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <TicketProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Navbar />
+            <Routes>
+              <Route path="/" element={
+                <AnimatedTransition>
+                  <Index />
+                </AnimatedTransition>
+              } />
+              <Route path="/submit-ticket" element={
+                <AnimatedTransition>
+                  <SubmitTicket />
+                </AnimatedTransition>
+              } />
+              <Route path="/ticket-submitted" element={
+                <AnimatedTransition>
+                  <TicketSubmitted />
+                </AnimatedTransition>
+              } />
+              <Route path="/admin" element={
+                <AnimatedTransition>
+                  <AdminLogin />
+                </AnimatedTransition>
+              } />
+              <Route path="/admin/dashboard" element={
+                <AnimatedTransition>
+                  <AdminDashboard />
+                </AnimatedTransition>
+              } />
+              <Route path="*" element={
+                <AnimatedTransition>
+                  <NotFound />
+                </AnimatedTransition>
+              } />
+            </Routes>
+          </BrowserRouter>
+        </TicketProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </React.StrictMode>
 );
 
 export default App;
