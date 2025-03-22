@@ -40,9 +40,12 @@ const TicketForm: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      // Create the ticket object with status explicitly typed
+      // Create the ticket object with all required fields
       const ticketData = {
-        ...values,
+        name: values.name,
+        email: values.email,
+        subject: values.subject,
+        message: values.message,
         status: "open" as "open" | "inProgress" | "resolved",
       };
       

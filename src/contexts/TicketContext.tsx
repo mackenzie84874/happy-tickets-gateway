@@ -171,9 +171,15 @@ export const TicketProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       }, (payload) => {
         console.log('Received real-time update:', payload);
         if (payload.new) {
-          const updatedTicket = {
-            ...payload.new,
-            status: payload.new.status as "open" | "inProgress" | "resolved"
+          // Ensure we're creating a properly typed Ticket object
+          const updatedTicket: Ticket = {
+            id: payload.new.id,
+            name: payload.new.name,
+            email: payload.new.email,
+            subject: payload.new.subject,
+            message: payload.new.message,
+            status: payload.new.status as "open" | "inProgress" | "resolved",
+            created_at: payload.new.created_at
           };
           
           // Update the local state

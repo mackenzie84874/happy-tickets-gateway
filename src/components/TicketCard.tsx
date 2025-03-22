@@ -48,7 +48,7 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
               {ticket.status === "inProgress" ? "In Progress" : ticket.status}
             </span>
             <span className="text-xs text-muted-foreground">
-              {formatDistanceToNow(new Date(ticket.timestamp), { addSuffix: true })}
+              {ticket.created_at && formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true })}
             </span>
           </div>
           <h3 className="font-medium text-lg">{ticket.subject}</h3>
