@@ -1,41 +1,56 @@
 
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const AdminLogin: React.FC = () => {
   const navigate = useNavigate();
-  const [username, setUsername] = useState("");
+  const { toast } = useToast();
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   
-  // For this demo, we use a simple admin credential check
-  // In a real app, you would use a proper authentication system
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     
     // Simple validation
-    if (!username || !password) {
-      setError("Please enter both username and password");
+    if (!email || !password) {
+      setError("Please enter both email and password");
       return;
     }
     
     setIsLoading(true);
     
-    // Fake API delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // Simple hardcoded admin check for demo
-    if (username === "admin" && password === "admin123") {
-      // Set admin session
-      localStorage.setItem("isAdmin", "true");
-      navigate("/admin/dashboard");
-    } else {
-      setError("Invalid credentials. Try 'admin' and 'admin123'.");
+    try {
+      const { data, error: loginError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (loginError) {
+        throw loginError;
+      }
+      
+      if (data?.session) {
+        // Set admin session
+        localStorage.setItem("isAdmin", "true");
+        
+        toast({
+          title: "Login successful",
+          description: "Welcome to the admin dashboard",
+        });
+        
+        navigate("/admin/dashboard");
+      }
+    } catch (err: any) {
+      console.error("Login error:", err);
+      setError(err.message || "Invalid credentials. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
   
   return (
@@ -60,16 +75,16 @@ const AdminLogin: React.FC = () => {
               
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <label htmlFor="username" className="text-sm font-medium">
-                    Username
+                  <label htmlFor="email" className="text-sm font-medium">
+                    Email
                   </label>
                   <input
-                    id="username"
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="w-full px-4 py-3 rounded-lg border border-input bg-background transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:border-input"
-                    placeholder="Enter your username"
+                    placeholder="Enter your email"
                   />
                 </div>
                 
@@ -105,7 +120,7 @@ const AdminLogin: React.FC = () => {
               </form>
               
               <div className="mt-6 text-center text-sm text-muted-foreground">
-                <p>For demo: Use "admin" and "admin123"</p>
+                <p>Use your Supabase account email and password</p>
               </div>
             </div>
           </div>

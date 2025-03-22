@@ -41,6 +41,38 @@ export type Database = {
           },
         ]
       }
+      ticket_status_logs: {
+        Row: {
+          created_at: string | null
+          id: string
+          new_status: Database["public"]["Enums"]["ticket_status"] | null
+          old_status: Database["public"]["Enums"]["ticket_status"] | null
+          ticket_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          new_status?: Database["public"]["Enums"]["ticket_status"] | null
+          old_status?: Database["public"]["Enums"]["ticket_status"] | null
+          ticket_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          new_status?: Database["public"]["Enums"]["ticket_status"] | null
+          old_status?: Database["public"]["Enums"]["ticket_status"] | null
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_status_logs_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tickets: {
         Row: {
           created_at: string
@@ -49,7 +81,7 @@ export type Database = {
           message: string
           name: string
           rating: number | null
-          status: string
+          status: Database["public"]["Enums"]["ticket_status"]
           subject: string
         }
         Insert: {
@@ -59,7 +91,7 @@ export type Database = {
           message: string
           name: string
           rating?: number | null
-          status?: string
+          status?: Database["public"]["Enums"]["ticket_status"]
           subject: string
         }
         Update: {
@@ -69,7 +101,7 @@ export type Database = {
           message?: string
           name?: string
           rating?: number | null
-          status?: string
+          status?: Database["public"]["Enums"]["ticket_status"]
           subject?: string
         }
         Relationships: []
@@ -79,10 +111,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_ticket_status: {
+        Args: {
+          ticket_id: string
+        }
+        Returns: string
+      }
+      force_update_ticket_status: {
+        Args: {
+          ticket_id: string
+          new_status: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
-      [_ in never]: never
+      ticket_status: "open" | "inProgress" | "resolved" | "closed"
     }
     CompositeTypes: {
       [_ in never]: never
