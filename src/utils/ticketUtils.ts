@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Ticket } from "@/types/ticket";
 
@@ -66,6 +65,10 @@ export const createTicket = async (ticketData: Omit<Ticket, "id" | "created_at">
 };
 
 export const updateTicketStatus = async (updatedTicket: Ticket): Promise<void> => {
+  const validStatus = ["open", "inProgress", "resolved"].includes(updatedTicket.status) 
+    ? updatedTicket.status
+    : "open";
+    
   const { error } = await supabase
     .from('tickets')
     .update({
@@ -73,13 +76,16 @@ export const updateTicketStatus = async (updatedTicket: Ticket): Promise<void> =
       email: updatedTicket.email,
       subject: updatedTicket.subject,
       message: updatedTicket.message,
-      status: updatedTicket.status
+      status: validStatus
     })
     .eq('id', updatedTicket.id);
 
   if (error) {
+    console.error("Error updating ticket in Supabase:", error);
     throw error;
   }
+  
+  console.log(`Ticket ${updatedTicket.id} updated to status: ${validStatus}`);
 };
 
 export const subscribeToTicketUpdates = (id: string, callback: (ticket: Ticket) => void) => {

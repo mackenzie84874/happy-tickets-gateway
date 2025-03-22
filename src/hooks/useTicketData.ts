@@ -1,7 +1,7 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useTickets } from "@/hooks/useTicketContext";
 import { Ticket } from "@/types/ticket";
+import { useToast } from "@/components/ui/use-toast";
 
 interface UseTicketDataParams {
   ticketId: string | null;
@@ -20,10 +20,30 @@ export const useTicketData = ({ ticketId }: UseTicketDataParams): UseTicketDataR
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const { toast } = useToast();
 
   // Callback for real-time updates
   const handleTicketUpdate = useCallback((updatedTicket: Ticket) => {
     console.log('Handling ticket update:', updatedTicket);
+    
+    // Check if the status changed
+    if (ticket && ticket.status !== updatedTicket.status) {
+      // Show toast notification for status change
+      let statusMessage = "Your ticket status has changed.";
+      
+      if (updatedTicket.status === "inProgress") {
+        statusMessage = "An agent has accepted your ticket and is working on it.";
+      } else if (updatedTicket.status === "resolved") {
+        statusMessage = "Your ticket has been resolved.";
+      }
+      
+      toast({
+        title: "Ticket Updated",
+        description: statusMessage,
+      });
+    }
+    
+    // Update the ticket state
     setTicket(updatedTicket);
     setIsUpdating(true);
     
@@ -31,7 +51,7 @@ export const useTicketData = ({ ticketId }: UseTicketDataParams): UseTicketDataR
     setTimeout(() => {
       setIsUpdating(false);
     }, 2000);
-  }, []);
+  }, [ticket, toast]);
 
   useEffect(() => {
     const fetchTicket = async () => {
@@ -59,7 +79,6 @@ export const useTicketData = ({ ticketId }: UseTicketDataParams): UseTicketDataR
     fetchTicket();
   }, [ticketId, getTicketById]);
 
-  // Set up real-time subscription when ticket is loaded
   useEffect(() => {
     if (ticketId && !loading) {
       // Subscribe to real-time updates

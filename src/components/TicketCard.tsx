@@ -6,6 +6,7 @@ import { useTickets } from "@/contexts/TicketContext";
 import { Ticket } from "@/types/ticket";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, CheckCircle } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -14,6 +15,7 @@ interface TicketCardProps {
 const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
   const { updateTicket } = useTickets();
   const [isExpanded, setIsExpanded] = useState(false);
+  const { toast } = useToast();
   
   const statusColors = {
     open: "bg-blue-50 text-blue-700 border-blue-200",
@@ -21,8 +23,23 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
     resolved: "bg-green-50 text-green-700 border-green-200"
   };
   
-  const handleStatusChange = (newStatus: "open" | "inProgress" | "resolved") => {
-    updateTicket({ ...ticket, status: newStatus });
+  const handleStatusChange = async (newStatus: "open" | "inProgress" | "resolved") => {
+    try {
+      await updateTicket({ ...ticket, status: newStatus });
+      
+      // Show success toast
+      toast({
+        title: `Ticket ${newStatus === "inProgress" ? "accepted" : "updated"}`,
+        description: `Ticket status changed to ${newStatus === "inProgress" ? "In Progress" : newStatus}`,
+      });
+    } catch (error) {
+      console.error("Error updating ticket status:", error);
+      toast({
+        title: "Error updating ticket",
+        description: "Failed to update ticket status. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
   
   const toggleExpand = () => {
