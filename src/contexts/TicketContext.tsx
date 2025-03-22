@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect, ReactNode } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Ticket, TicketContextType } from "@/types/ticket";
@@ -8,7 +9,7 @@ import {
   updateTicketStatus,
   subscribeToTicketUpdates,
   createReply
-} from "@/utils/ticketUtils";
+} from "@/utils/tickets";
 
 // Create the context
 export const TicketContext = createContext<TicketContextType | undefined>(undefined);

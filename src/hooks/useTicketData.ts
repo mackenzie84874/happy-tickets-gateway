@@ -1,9 +1,8 @@
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useTickets } from "@/hooks/useTicketContext";
 import { Ticket, TicketReply } from "@/types/ticket";
 import { useToast } from "@/hooks/use-toast";
-import { fetchReplies, subscribeToReplies } from "@/utils/ticketUtils";
+import { fetchReplies, subscribeToReplies } from "@/utils/tickets";
 
 interface UseTicketDataParams {
   ticketId: string | null;
@@ -29,13 +28,10 @@ export const useTicketData = ({ ticketId }: UseTicketDataParams): UseTicketDataR
   const { toast } = useToast();
   const subscriptionsActive = useRef<boolean>(false);
 
-  // Callback for real-time updates
   const handleTicketUpdate = useCallback((updatedTicket: Ticket) => {
     console.log('Handling ticket update:', updatedTicket);
     
-    // Check if the status changed
     if (ticket && ticket.status !== updatedTicket.status) {
-      // Show toast notification for status change
       let statusMessage = "Your ticket status has changed.";
       
       if (updatedTicket.status === "inProgress") {
@@ -52,35 +48,28 @@ export const useTicketData = ({ ticketId }: UseTicketDataParams): UseTicketDataR
       });
     }
     
-    // Update the ticket state
     setTicket(updatedTicket);
     setIsUpdating(true);
     
-    // Visual feedback for the update
     setTimeout(() => {
       setIsUpdating(false);
     }, 2000);
   }, [ticket, toast]);
 
-  // Callback for real-time replies
   const handleNewReply = useCallback((newReply: TicketReply) => {
     console.log('Handling new reply:', newReply);
     
-    // Show toast notification for new reply
     toast({
       title: "New Reply",
       description: `${newReply.admin_name} has replied to your ticket.`,
     });
     
-    // Add the new reply to the replies state
     setReplies(prev => {
-      // Check if the reply is already in the array to avoid duplicates
       const exists = prev.some(reply => reply.id === newReply.id);
       if (exists) return prev;
       return [...prev, newReply];
     });
     
-    // Visual feedback for the update
     setIsUpdating(true);
     setTimeout(() => {
       setIsUpdating(false);
@@ -115,7 +104,6 @@ export const useTicketData = ({ ticketId }: UseTicketDataParams): UseTicketDataR
     fetchTicket();
   }, [ticketId, getTicketById]);
 
-  // Load ticket replies
   useEffect(() => {
     const loadReplies = async () => {
       if (!ticketId) return;
@@ -137,19 +125,15 @@ export const useTicketData = ({ ticketId }: UseTicketDataParams): UseTicketDataR
     loadReplies();
   }, [ticketId]);
 
-  // Subscribe to ticket updates
   useEffect(() => {
     if (ticketId && !loading && !subscriptionsActive.current) {
       console.log("Setting up subscriptions for ticket:", ticketId);
       subscriptionsActive.current = true;
       
-      // Subscribe to real-time updates
       const unsubscribeTicket = subscribeToTicket(ticketId, handleTicketUpdate);
       
-      // Subscribe to real-time updates for replies
       const unsubscribeReplies = subscribeToReplies(ticketId, handleNewReply);
       
-      // Clean up subscriptions on unmount
       return () => {
         console.log("Cleaning up subscriptions for ticket:", ticketId);
         unsubscribeTicket();
