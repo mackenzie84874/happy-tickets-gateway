@@ -46,7 +46,7 @@ const TicketForm: React.FC = () => {
       const newTicket = {
         id: Date.now().toString(),
         timestamp: new Date().toISOString(),
-        status: "open",
+        status: "open" as "open" | "inProgress" | "resolved", // Use type assertion to match the union type
         ...formState,
       };
       
