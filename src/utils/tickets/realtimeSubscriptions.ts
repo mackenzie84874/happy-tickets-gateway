@@ -21,8 +21,9 @@ export const subscribeToTicketUpdates = (id: string, callback: (ticket: Ticket) 
           email: payload.new.email,
           subject: payload.new.subject,
           message: payload.new.message,
-          status: payload.new.status as "open" | "inProgress" | "resolved",
-          created_at: payload.new.created_at
+          status: payload.new.status as "open" | "inProgress" | "resolved" | "closed",
+          created_at: payload.new.created_at,
+          rating: payload.new.rating
         };
         
         callback(updatedTicket);

@@ -16,7 +16,7 @@ export const fetchTickets = async (): Promise<Ticket[]> => {
   if (data) {
     return data.map(ticket => ({
       ...ticket,
-      status: ticket.status as "open" | "inProgress" | "resolved"
+      status: ticket.status as "open" | "inProgress" | "resolved" | "closed"
     }));
   }
   
@@ -38,7 +38,7 @@ export const fetchTicketById = async (id: string): Promise<Ticket | undefined> =
   if (data) {
     return {
       ...data,
-      status: data.status as "open" | "inProgress" | "resolved"
+      status: data.status as "open" | "inProgress" | "resolved" | "closed"
     };
   }
   
