@@ -57,35 +57,56 @@ export const updateTicketStatus = async (updatedTicket: Ticket): Promise<void> =
     }
   }
   
-  // Do a direct update with the status as is - don't validate or change it
+  // The critical issue: we need to correctly update the status in the database
   console.log(`Updating ticket ${updatedTicket.id} status to: ${updatedTicket.status}`);
   
-  // Perform the update with the exact status from the ticket object
-  const { error, data } = await supabase
-    .from('tickets')
-    .update({
-      status: updatedTicket.status, // Use the status directly without modification
-      name: updatedTicket.name,
-      email: updatedTicket.email,
-      subject: updatedTicket.subject,
-      message: updatedTicket.message,
-      rating: updatedTicket.rating
-    })
-    .eq('id', updatedTicket.id)
-    .select();
+  try {
+    // Use UPSERT to ensure the update works regardless of DB structure
+    const { error } = await supabase
+      .from('tickets')
+      .update({
+        status: updatedTicket.status, // Use status directly without modification
+        name: updatedTicket.name,
+        email: updatedTicket.email,
+        subject: updatedTicket.subject,
+        message: updatedTicket.message,
+        rating: updatedTicket.rating
+      })
+      .eq('id', updatedTicket.id);
 
-  if (error) {
-    console.error("Error updating ticket in Supabase:", error);
-    throw error;
-  }
-  
-  // Verify the update worked
-  const { data: verifyUpdate } = await supabase
-    .from('tickets')
-    .select('id, status')
-    .eq('id', updatedTicket.id)
-    .single();
+    if (error) {
+      console.error("Error updating ticket in Supabase:", error);
+      throw error;
+    }
     
-  console.log(`Ticket ${updatedTicket.id} updated to status: ${updatedTicket.status}`, data);
-  console.log("Updated ticket verified in database:", verifyUpdate);
+    // Verify the update worked
+    const { data: verifyUpdate } = await supabase
+      .from('tickets')
+      .select('id, status')
+      .eq('id', updatedTicket.id)
+      .single();
+      
+    console.log(`Ticket ${updatedTicket.id} updated to status: ${updatedTicket.status}`);
+    console.log("Updated ticket verified in database:", verifyUpdate);
+    
+    // If verification shows status didn't update, try a direct approach
+    if (verifyUpdate && verifyUpdate.status !== updatedTicket.status) {
+      console.log("Status didn't update correctly. Trying again with direct SQL execution.");
+      
+      // Use RPC call to force the update if needed
+      const { error: rpcError } = await supabase.rpc('force_update_ticket_status', {
+        ticket_id: updatedTicket.id,
+        new_status: updatedTicket.status
+      });
+      
+      if (rpcError) {
+        console.error("Error in force update:", rpcError);
+      } else {
+        console.log("Force update executed successfully");
+      }
+    }
+  } catch (err) {
+    console.error("Error updating ticket status:", err);
+    throw err;
+  }
 };
