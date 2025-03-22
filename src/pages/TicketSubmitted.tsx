@@ -1,19 +1,34 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useTickets, Ticket } from "@/contexts/TicketContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
+import { Loader2 } from "lucide-react";
 
 const TicketSubmitted: React.FC = () => {
   const [searchParams] = useSearchParams();
   const ticketId = searchParams.get("id");
-  const { getTicketById } = useTickets();
+  const { getTicketById, subscribeToTicket } = useTickets();
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  // Callback for real-time updates
+  const handleTicketUpdate = useCallback((updatedTicket: Ticket) => {
+    console.log('Handling ticket update:', updatedTicket);
+    setTicket(updatedTicket);
+    setIsUpdating(true);
+    
+    // Visual feedback for the update
+    setTimeout(() => {
+      setIsUpdating(false);
+    }, 2000);
+  }, []);
 
   useEffect(() => {
     const fetchTicket = async () => {
@@ -41,10 +56,22 @@ const TicketSubmitted: React.FC = () => {
     fetchTicket();
   }, [ticketId, getTicketById]);
 
+  // Set up real-time subscription when ticket is loaded
+  useEffect(() => {
+    if (ticketId && !loading) {
+      // Subscribe to real-time updates
+      const unsubscribe = subscribeToTicket(ticketId, handleTicketUpdate);
+      
+      // Clean up subscription on unmount
+      return unsubscribe;
+    }
+  }, [ticketId, loading, subscribeToTicket, handleTicketUpdate]);
+
   if (loading) {
     return (
       <div className="min-h-screen pt-20 flex items-center justify-center">
         <div className="animate-pulse text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
           <p className="text-muted-foreground">Loading ticket details...</p>
         </div>
       </div>
@@ -71,6 +98,20 @@ const TicketSubmitted: React.FC = () => {
     );
   }
 
+  // Function to get status badge color
+  const getStatusBadge = () => {
+    switch (ticket.status) {
+      case "open":
+        return <Badge className="bg-blue-500 hover:bg-blue-600">Open</Badge>;
+      case "inProgress":
+        return <Badge className="bg-yellow-500 hover:bg-yellow-600">In Progress</Badge>;
+      case "resolved":
+        return <Badge className="bg-green-500 hover:bg-green-600">Resolved</Badge>;
+      default:
+        return <Badge>{ticket.status}</Badge>;
+    }
+  };
+
   return (
     <div className="min-h-screen pt-20 flex items-center justify-center">
       <div className="container px-4 sm:px-6 py-12">
@@ -88,12 +129,25 @@ const TicketSubmitted: React.FC = () => {
             </p>
           </div>
           
-          <Card className="animate-scale-in shadow-sm">
+          <Card className={`shadow-sm transition-all duration-300 ${isUpdating ? 'ring-2 ring-primary animate-pulse' : ''}`}>
             <CardHeader>
-              <CardTitle>Ticket Details</CardTitle>
-              <CardDescription>
-                Ticket ID: <span className="font-mono text-xs">{ticket.id}</span>
-              </CardDescription>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>Ticket Details</CardTitle>
+                  <CardDescription>
+                    Ticket ID: <span className="font-mono text-xs">{ticket.id}</span>
+                  </CardDescription>
+                </div>
+                <div className="flex items-center space-x-2">
+                  {isUpdating && (
+                    <div className="flex items-center">
+                      <Loader2 className="h-4 w-4 animate-spin mr-2 text-primary" />
+                      <span className="text-xs text-primary">Updating...</span>
+                    </div>
+                  )}
+                  {getStatusBadge()}
+                </div>
+              </div>
             </CardHeader>
             
             <CardContent className="space-y-4">
@@ -123,9 +177,11 @@ const TicketSubmitted: React.FC = () => {
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">Status</h3>
                   <div className="mt-1">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      {ticket.status === "inProgress" ? "In Progress" : ticket.status}
-                    </span>
+                    <p className="text-sm">
+                      {ticket.status === "open" && "Your ticket is being reviewed."}
+                      {ticket.status === "inProgress" && "We're currently working on your request."}
+                      {ticket.status === "resolved" && "Your ticket has been resolved."}
+                    </p>
                   </div>
                 </div>
                 

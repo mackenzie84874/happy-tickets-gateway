@@ -20,6 +20,7 @@ interface TicketContextType {
   addTicket: (ticket: Omit<Ticket, "id" | "created_at">) => Promise<string | undefined>;
   updateTicket: (updatedTicket: Ticket) => void;
   getTicketById: (id: string) => Promise<Ticket | undefined>;
+  subscribeToTicket: (id: string, callback: (ticket: Ticket) => void) => () => void;
 }
 
 // Create the context
@@ -156,8 +157,47 @@ export const TicketProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     return undefined;
   };
 
+  // Add a function to subscribe to real-time updates for a specific ticket
+  const subscribeToTicket = (id: string, callback: (ticket: Ticket) => void) => {
+    console.log(`Subscribing to updates for ticket ${id}`);
+    
+    const channel = supabase
+      .channel(`ticket-${id}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'tickets',
+        filter: `id=eq.${id}`
+      }, (payload) => {
+        console.log('Received real-time update:', payload);
+        if (payload.new) {
+          const updatedTicket = {
+            ...payload.new,
+            status: payload.new.status as "open" | "inProgress" | "resolved"
+          };
+          
+          // Update the local state
+          setTickets(prevTickets =>
+            prevTickets.map(ticket => 
+              ticket.id === id ? updatedTicket : ticket
+            )
+          );
+          
+          // Call the callback with the updated ticket
+          callback(updatedTicket);
+        }
+      })
+      .subscribe();
+    
+    // Return a cleanup function to unsubscribe when component unmounts
+    return () => {
+      console.log(`Unsubscribing from updates for ticket ${id}`);
+      supabase.removeChannel(channel);
+    };
+  };
+
   return (
-    <TicketContext.Provider value={{ tickets, addTicket, updateTicket, getTicketById }}>
+    <TicketContext.Provider value={{ tickets, addTicket, updateTicket, getTicketById, subscribeToTicket }}>
       {children}
     </TicketContext.Provider>
   );
