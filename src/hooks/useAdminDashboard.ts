@@ -8,7 +8,7 @@ export const useAdminDashboard = () => {
   const navigate = useNavigate();
   const { tickets } = useTickets();
   const [isAdmin, setIsAdmin] = useState(false);
-  const [filter, setFilter] = useState<"all" | "open" | "inProgress" | "resolved" | "closed">("all");
+  const [filter, setFilter] = useState<"all" | "open" | "inProgress" | "resolved" | "closed">("open"); // Changed default from "all" to "open"
   const [showResolved, setShowResolved] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   

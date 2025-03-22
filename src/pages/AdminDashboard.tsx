@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useAdminDashboard } from "@/hooks/useAdminDashboard";
 import DashboardHeader from "@/components/admin/DashboardHeader";
 import StatusFilterCards from "@/components/admin/StatusFilterCards";
@@ -21,6 +21,17 @@ const AdminDashboard: React.FC = () => {
     handleLogout,
     isLoading
   } = useAdminDashboard();
+  
+  // Effect to log the filtered tickets whenever they change
+  useEffect(() => {
+    if (filteredTickets.length > 0) {
+      console.log("Currently displayed tickets:", filteredTickets.map(t => ({
+        id: t.id,
+        subject: t.subject,
+        status: t.status
+      })));
+    }
+  }, [filteredTickets]);
   
   if (!isAdmin) {
     return (
