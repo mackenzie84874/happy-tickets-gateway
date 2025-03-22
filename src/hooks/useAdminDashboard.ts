@@ -29,6 +29,17 @@ export const useAdminDashboard = () => {
     return () => clearTimeout(timer);
   }, [navigate]);
   
+  // Debug - log all tickets and their statuses
+  useEffect(() => {
+    if (tickets.length > 0) {
+      console.log("Current tickets in admin dashboard:", tickets.map(t => ({
+        id: t.id,
+        subject: t.subject,
+        status: t.status
+      })));
+    }
+  }, [tickets]);
+  
   const handleLogout = () => {
     localStorage.removeItem("isAdmin");
     navigate("/admin");

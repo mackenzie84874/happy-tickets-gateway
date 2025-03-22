@@ -57,6 +57,9 @@ export const updateTicketStatus = async (updatedTicket: Ticket): Promise<void> =
     ? updatedTicket.status
     : "open";
     
+  // Log the status before update for debugging
+  console.log(`Updating ticket ${updatedTicket.id} status to: ${validStatus}`);
+  
   const { error } = await supabase
     .from('tickets')
     .update({
