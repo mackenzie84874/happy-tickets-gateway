@@ -1,5 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 // Define the ticket interface
 export interface Ticket {
@@ -9,15 +11,15 @@ export interface Ticket {
   subject: string;
   message: string;
   status: "open" | "inProgress" | "resolved";
-  timestamp: string;
+  created_at?: string;
 }
 
 // Define the context interface
 interface TicketContextType {
   tickets: Ticket[];
-  addTicket: (ticket: Ticket) => Promise<void>;
+  addTicket: (ticket: Omit<Ticket, "id" | "created_at">) => Promise<string | undefined>;
   updateTicket: (updatedTicket: Ticket) => void;
-  getTicketById: (id: string) => Ticket | undefined;
+  getTicketById: (id: string) => Promise<Ticket | undefined>;
 }
 
 // Create the context
@@ -26,39 +28,132 @@ const TicketContext = createContext<TicketContextType | undefined>(undefined);
 // Provider component
 export const TicketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const { toast } = useToast();
 
-  // Load tickets from localStorage on initial render
+  // Fetch tickets from Supabase on initial render
   useEffect(() => {
-    const storedTickets = localStorage.getItem("tickets");
-    if (storedTickets) {
+    const fetchTickets = async () => {
       try {
-        setTickets(JSON.parse(storedTickets));
+        const { data, error } = await supabase
+          .from('tickets')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          throw error;
+        }
+
+        if (data) {
+          // Convert status to the correct type
+          const formattedTickets = data.map(ticket => ({
+            ...ticket,
+            status: ticket.status as "open" | "inProgress" | "resolved"
+          }));
+          setTickets(formattedTickets);
+        }
       } catch (error) {
-        console.error("Error parsing stored tickets:", error);
-        localStorage.removeItem("tickets");
+        console.error("Error fetching tickets:", error);
+        toast({
+          title: "Error fetching tickets",
+          description: "There was a problem loading your tickets.",
+          variant: "destructive"
+        });
       }
+    };
+
+    fetchTickets();
+  }, [toast]);
+
+  const addTicket = async (ticketData: Omit<Ticket, "id" | "created_at">): Promise<string | undefined> => {
+    try {
+      const { data, error } = await supabase
+        .from('tickets')
+        .insert([ticketData])
+        .select()
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      if (data) {
+        const newTicket = {
+          ...data,
+          status: data.status as "open" | "inProgress" | "resolved"
+        };
+        setTickets(prevTickets => [newTicket, ...prevTickets]);
+        return newTicket.id;
+      }
+    } catch (error) {
+      console.error("Error adding ticket:", error);
+      toast({
+        title: "Error submitting ticket",
+        description: "There was a problem submitting your ticket. Please try again.",
+        variant: "destructive"
+      });
     }
-  }, []);
-
-  // Save tickets to localStorage whenever tickets change
-  useEffect(() => {
-    localStorage.setItem("tickets", JSON.stringify(tickets));
-  }, [tickets]);
-
-  const addTicket = async (ticket: Ticket): Promise<void> => {
-    setTickets(prevTickets => [...prevTickets, ticket]);
+    return undefined;
   };
 
-  const updateTicket = (updatedTicket: Ticket): void => {
-    setTickets(prevTickets =>
-      prevTickets.map(ticket => 
-        ticket.id === updatedTicket.id ? updatedTicket : ticket
-      )
-    );
+  const updateTicket = async (updatedTicket: Ticket): Promise<void> => {
+    try {
+      const { error } = await supabase
+        .from('tickets')
+        .update({
+          name: updatedTicket.name,
+          email: updatedTicket.email,
+          subject: updatedTicket.subject,
+          message: updatedTicket.message,
+          status: updatedTicket.status
+        })
+        .eq('id', updatedTicket.id);
+
+      if (error) {
+        throw error;
+      }
+
+      setTickets(prevTickets =>
+        prevTickets.map(ticket => 
+          ticket.id === updatedTicket.id ? updatedTicket : ticket
+        )
+      );
+    } catch (error) {
+      console.error("Error updating ticket:", error);
+      toast({
+        title: "Error updating ticket",
+        description: "There was a problem updating the ticket.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const getTicketById = (id: string): Ticket | undefined => {
-    return tickets.find(ticket => ticket.id === id);
+  const getTicketById = async (id: string): Promise<Ticket | undefined> => {
+    try {
+      const { data, error } = await supabase
+        .from('tickets')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      if (data) {
+        return {
+          ...data,
+          status: data.status as "open" | "inProgress" | "resolved"
+        };
+      }
+    } catch (error) {
+      console.error("Error fetching ticket:", error);
+      toast({
+        title: "Error fetching ticket",
+        description: "There was a problem loading the ticket details.",
+        variant: "destructive"
+      });
+    }
+    return undefined;
   };
 
   return (

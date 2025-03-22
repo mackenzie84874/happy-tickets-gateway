@@ -2,64 +2,66 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTickets } from "@/contexts/TicketContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { useToast } from "@/components/ui/use-toast";
+
+const formSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Please enter a valid email address"),
+  subject: z.string().min(3, "Subject must be at least 3 characters"),
+  message: z.string().min(10, "Message must be at least 10 characters"),
+});
+
+type FormValues = z.infer<typeof formSchema>;
 
 const TicketForm: React.FC = () => {
   const navigate = useNavigate();
   const { addTicket } = useTickets();
-  
-  const [formState, setFormState] = useState({
-    name: "",
-    email: "",
-    subject: "",
-    message: "",
-  });
-  
-  const [error, setError] = useState("");
+  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormState((prev) => ({ ...prev, [name]: value }));
-  };
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      subject: "",
+      message: "",
+    },
+  });
   
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    
-    // Simple validation
-    if (!formState.name || !formState.email || !formState.subject || !formState.message) {
-      setError("Please fill in all fields");
-      return;
-    }
-    
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formState.email)) {
-      setError("Please enter a valid email address");
-      return;
-    }
-    
+  const onSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
     
     try {
-      // Add the ticket with a unique ID and timestamp
-      const newTicket = {
-        id: Date.now().toString(),
-        timestamp: new Date().toISOString(),
-        status: "open" as "open" | "inProgress" | "resolved", // Use type assertion to match the union type
-        ...formState,
+      // Create the ticket object with status explicitly typed
+      const ticketData = {
+        ...values,
+        status: "open" as "open" | "inProgress" | "resolved",
       };
       
-      await addTicket(newTicket);
+      const ticketId = await addTicket(ticketData);
       
-      // Fake API delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // Clear form and navigate
-      setFormState({ name: "", email: "", subject: "", message: "" });
-      navigate("/ticket-submitted");
+      if (ticketId) {
+        // Clear form
+        form.reset();
+        // Navigate to success page with ticket ID
+        navigate(`/ticket-submitted?id=${ticketId}`);
+      } else {
+        throw new Error("Failed to submit ticket");
+      }
     } catch (err) {
-      setError("There was an error submitting your ticket. Please try again.");
+      toast({
+        title: "Error",
+        description: "There was an error submitting your ticket. Please try again.",
+        variant: "destructive",
+      });
       console.error(err);
     } finally {
       setIsSubmitting(false);
@@ -67,83 +69,80 @@ const TicketForm: React.FC = () => {
   };
   
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 animate-scale-in">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <label htmlFor="name" className="text-sm font-medium">
-            Name
-          </label>
-          <input
-            id="name"
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 animate-scale-in">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <FormField
+            control={form.control}
             name="name"
-            type="text"
-            value={formState.name}
-            onChange={handleChange}
-            className="w-full px-4 py-3 rounded-lg border border-input bg-background transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:border-input"
-            placeholder="Your name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="Your name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input type="email" placeholder="Your email address" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
         </div>
         
-        <div className="space-y-2">
-          <label htmlFor="email" className="text-sm font-medium">
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            value={formState.email}
-            onChange={handleChange}
-            className="w-full px-4 py-3 rounded-lg border border-input bg-background transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:border-input"
-            placeholder="Your email address"
-          />
-        </div>
-      </div>
-      
-      <div className="space-y-2">
-        <label htmlFor="subject" className="text-sm font-medium">
-          Subject
-        </label>
-        <input
-          id="subject"
+        <FormField
+          control={form.control}
           name="subject"
-          type="text"
-          value={formState.subject}
-          onChange={handleChange}
-          className="w-full px-4 py-3 rounded-lg border border-input bg-background transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:border-input"
-          placeholder="Subject of your ticket"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Subject</FormLabel>
+              <FormControl>
+                <Input placeholder="Subject of your ticket" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
-      
-      <div className="space-y-2">
-        <label htmlFor="message" className="text-sm font-medium">
-          Message
-        </label>
-        <textarea
-          id="message"
+        
+        <FormField
+          control={form.control}
           name="message"
-          value={formState.message}
-          onChange={handleChange}
-          rows={5}
-          className="w-full px-4 py-3 rounded-lg border border-input bg-background transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:border-input resize-none"
-          placeholder="Describe your issue in detail..."
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Message</FormLabel>
+              <FormControl>
+                <Textarea 
+                  placeholder="Describe your issue in detail..." 
+                  rows={5}
+                  className="resize-none"
+                  {...field} 
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
-      
-      {error && (
-        <div className="text-destructive text-sm font-medium animate-slide-up">
-          {error}
-        </div>
-      )}
-      
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="w-full py-3 px-8 rounded-lg bg-primary text-primary-foreground text-sm font-medium transition-all hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none"
-      >
-        {isSubmitting ? "Submitting..." : "Submit Ticket"}
-      </button>
-    </form>
+        
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? "Submitting..." : "Submit Ticket"}
+        </Button>
+      </form>
+    </Form>
   );
 };
 
