@@ -32,10 +32,15 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
       return;
     }
     
+    // If already updating or status is the same, don't proceed
+    if (isUpdating || ticket.status === newStatus) {
+      return;
+    }
+    
     setIsUpdating(true);
     
     try {
-      console.log(`Changing ticket ${ticket.id} status from ${ticket.status} to ${newStatus}`);
+      console.log(`TicketCard - Changing ticket ${ticket.id} status from ${ticket.status} to ${newStatus}`);
       
       // Create a complete updatedTicket object
       const updatedTicket = {
@@ -151,6 +156,7 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
             <TicketStatusButtons 
               ticket={ticket}
               onStatusChange={handleStatusChange}
+              isUpdating={isUpdating}
             />
           </div>
         )}

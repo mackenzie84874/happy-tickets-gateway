@@ -28,8 +28,9 @@ export interface TicketStatusCounts {
 
 export interface TicketContextType {
   tickets: Ticket[];
+  isLoading: boolean;
   addTicket: (ticket: Omit<Ticket, "id" | "created_at">) => Promise<string | undefined>;
-  updateTicket: (updatedTicket: Ticket) => void;
+  updateTicket: (updatedTicket: Ticket) => Promise<void>;
   getTicketById: (id: string) => Promise<Ticket | undefined>;
   subscribeToTicket: (id: string, callback: (ticket: Ticket) => void) => () => void;
   addReply: (ticketId: string, adminName: string, message: string) => Promise<void>;
