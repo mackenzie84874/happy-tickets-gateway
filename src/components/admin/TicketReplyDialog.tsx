@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useTickets } from "@/hooks/useTicketContext";
 import { Ticket } from "@/types/ticket";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface TicketReplyDialogProps {
   ticket: Ticket;
@@ -16,11 +16,13 @@ interface TicketReplyDialogProps {
 const TicketReplyDialog: React.FC<TicketReplyDialogProps> = ({ ticket, isOpen, onClose }) => {
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const { addReply } = useTickets();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitError(null);
 
     if (!message.trim()) {
       toast({
@@ -33,9 +35,11 @@ const TicketReplyDialog: React.FC<TicketReplyDialogProps> = ({ ticket, isOpen, o
 
     setIsSubmitting(true);
     try {
+      console.log("Attempting to send reply for ticket:", ticket.id);
       // Use "Admin" as the default admin name for now
       await addReply(ticket.id, "Admin", message);
       
+      console.log("Reply sent successfully");
       toast({
         title: "Reply sent",
         description: "Your reply has been sent to the customer",
@@ -43,8 +47,9 @@ const TicketReplyDialog: React.FC<TicketReplyDialogProps> = ({ ticket, isOpen, o
       
       setMessage("");
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sending reply:", error);
+      setSubmitError(error?.message || "Unknown error");
       toast({
         title: "Failed to send reply",
         description: "There was a problem sending your reply. Please try again.",
@@ -74,6 +79,12 @@ const TicketReplyDialog: React.FC<TicketReplyDialogProps> = ({ ticket, isOpen, o
               className="min-h-[120px]"
               disabled={isSubmitting}
             />
+            
+            {submitError && (
+              <div className="mt-2 p-2 text-sm text-red-600 bg-red-50 rounded border border-red-200">
+                Error: {submitError}
+              </div>
+            )}
           </div>
           
           <DialogFooter>

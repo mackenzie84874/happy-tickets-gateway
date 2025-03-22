@@ -48,7 +48,6 @@ export const createTicket = async (ticketData: Omit<Ticket, "id" | "created_at">
   console.log("Creating ticket with data:", ticketData);
   
   try {
-    // For guest submissions with explicit columns to match the database schema
     const { data, error } = await supabase
       .from('tickets')
       .insert([{
@@ -144,26 +143,33 @@ export const createReply = async (
   adminName: string, 
   message: string
 ): Promise<TicketReply | undefined> => {
-  const { data, error } = await supabase
-    .from('ticket_replies')
-    .insert([{
-      ticket_id: ticketId,
-      admin_name: adminName,
-      message: message
-    }])
-    .select()
-    .single();
-
-  if (error) {
-    console.error("Error creating reply in Supabase:", error);
-    throw error;
-  }
-
-  if (data) {
-    return data as TicketReply;
-  }
+  console.log(`Creating reply for ticket ${ticketId} from ${adminName}`);
   
-  return undefined;
+  try {
+    const { data, error } = await supabase
+      .from('ticket_replies')
+      .insert([{
+        ticket_id: ticketId,
+        admin_name: adminName,
+        message: message
+      }])
+      .select();
+
+    if (error) {
+      console.error("Error creating reply in Supabase:", error);
+      throw new Error(`Failed to add reply: ${error.message || error.details || "Unknown error"}`);
+    }
+
+    if (data && data.length > 0) {
+      console.log("Reply created successfully:", data[0]);
+      return data[0] as TicketReply;
+    } else {
+      throw new Error("No data returned after creating reply");
+    }
+  } catch (err) {
+    console.error("Error in createReply function:", err);
+    throw err;
+  }
 };
 
 export const fetchReplies = async (ticketId: string): Promise<TicketReply[]> => {
