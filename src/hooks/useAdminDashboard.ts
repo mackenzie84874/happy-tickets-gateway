@@ -10,6 +10,7 @@ export const useAdminDashboard = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [filter, setFilter] = useState<"all" | "open" | "inProgress" | "resolved" | "closed">("all");
   const [showResolved, setShowResolved] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
     // Check if user is logged in as admin
@@ -19,6 +20,13 @@ export const useAdminDashboard = () => {
     } else {
       setIsAdmin(true);
     }
+    
+    // Set loading to false after a short delay to simulate data loading
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+    
+    return () => clearTimeout(timer);
   }, [navigate]);
   
   const handleLogout = () => {
@@ -49,6 +57,7 @@ export const useAdminDashboard = () => {
     setShowResolved,
     filteredTickets,
     countByStatus,
-    handleLogout
+    handleLogout,
+    isLoading
   };
 };
