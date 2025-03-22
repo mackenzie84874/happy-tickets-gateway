@@ -27,6 +27,16 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
   };
   
   const handleStatusChange = async (newStatus: "open" | "inProgress" | "resolved" | "closed") => {
+    // If ticket is already closed, don't allow status changes
+    if (ticket.status === "closed") {
+      toast({
+        title: "Cannot update closed ticket",
+        description: "Closed tickets cannot be reopened or modified.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       await updateTicket({ ...ticket, status: newStatus });
       
@@ -162,41 +172,50 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
             </div>
             
             <div className="flex items-center space-x-2 pt-2">
-              <button
-                onClick={() => handleStatusChange("open")}
-                className={cn(
-                  "px-3 py-1 text-xs rounded-full border transition-colors",
-                  ticket.status === "open" ? "bg-blue-100 text-blue-800 border-blue-200" : "bg-white text-muted-foreground border-input hover:bg-blue-50"
-                )}
-              >
-                Open
-              </button>
-              <button
-                onClick={() => handleStatusChange("inProgress")}
-                className={cn(
-                  "px-3 py-1 text-xs rounded-full border transition-colors",
-                  ticket.status === "inProgress" ? "bg-yellow-100 text-yellow-800 border-yellow-200" : "bg-white text-muted-foreground border-input hover:bg-yellow-50"
-                )}
-              >
-                In Progress
-              </button>
-              <button
-                onClick={() => handleStatusChange("resolved")}
-                className={cn(
-                  "px-3 py-1 text-xs rounded-full border transition-colors",
-                  ticket.status === "resolved" ? "bg-green-100 text-green-800 border-green-200" : "bg-white text-muted-foreground border-input hover:bg-green-50"
-                )}
-              >
-                Resolved
-              </button>
+              {/* Don't show status change buttons if ticket is closed */}
+              {ticket.status !== "closed" && (
+                <>
+                  <button
+                    onClick={() => handleStatusChange("open")}
+                    className={cn(
+                      "px-3 py-1 text-xs rounded-full border transition-colors",
+                      ticket.status === "open" ? "bg-blue-100 text-blue-800 border-blue-200" : "bg-white text-muted-foreground border-input hover:bg-blue-50"
+                    )}
+                    disabled={ticket.status === "closed"}
+                  >
+                    Open
+                  </button>
+                  <button
+                    onClick={() => handleStatusChange("inProgress")}
+                    className={cn(
+                      "px-3 py-1 text-xs rounded-full border transition-colors",
+                      ticket.status === "inProgress" ? "bg-yellow-100 text-yellow-800 border-yellow-200" : "bg-white text-muted-foreground border-input hover:bg-yellow-50"
+                    )}
+                    disabled={ticket.status === "closed"}
+                  >
+                    In Progress
+                  </button>
+                  <button
+                    onClick={() => handleStatusChange("resolved")}
+                    className={cn(
+                      "px-3 py-1 text-xs rounded-full border transition-colors",
+                      ticket.status === "resolved" ? "bg-green-100 text-green-800 border-green-200" : "bg-white text-muted-foreground border-input hover:bg-green-50"
+                    )}
+                    disabled={ticket.status === "closed"}
+                  >
+                    Resolved
+                  </button>
+                </>
+              )}
               <button
                 onClick={() => handleStatusChange("closed")}
                 className={cn(
                   "px-3 py-1 text-xs rounded-full border transition-colors",
                   ticket.status === "closed" ? "bg-gray-100 text-gray-800 border-gray-200" : "bg-white text-muted-foreground border-input hover:bg-gray-50"
                 )}
+                disabled={ticket.status === "closed"}
               >
-                Closed
+                Close
               </button>
             </div>
           </div>
