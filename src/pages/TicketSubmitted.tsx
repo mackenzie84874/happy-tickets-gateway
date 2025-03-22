@@ -1,7 +1,8 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { useTickets, Ticket } from "@/contexts/TicketContext";
+import { useTickets } from "@/hooks/useTicketContext";
+import { Ticket } from "@/types/ticket";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";

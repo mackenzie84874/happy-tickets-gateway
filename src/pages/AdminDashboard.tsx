@@ -1,7 +1,8 @@
 
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useTickets, Ticket } from "@/contexts/TicketContext";
+import { useTickets } from "@/hooks/useTicketContext";
+import { Ticket } from "@/types/ticket";
 import TicketCard from "@/components/TicketCard";
 
 const AdminDashboard: React.FC = () => {
