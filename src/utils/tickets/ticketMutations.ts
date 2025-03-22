@@ -40,7 +40,8 @@ export const createTicket = async (ticketData: Omit<Ticket, "id" | "created_at">
 export const updateTicketStatus = async (updatedTicket: Ticket): Promise<void> => {
   console.log("updateTicketStatus called with ticket:", {
     id: updatedTicket.id,
-    status: updatedTicket.status
+    status: updatedTicket.status,
+    current_time: new Date().toISOString()
   });
   
   // If ticket is closed, it cannot be changed to any other status
@@ -57,15 +58,15 @@ export const updateTicketStatus = async (updatedTicket: Ticket): Promise<void> =
     }
   }
   
-  // The critical issue: correctly update the status in the database
+  // The critical update: directly set the status in the database
   console.log(`Updating ticket ${updatedTicket.id} status to: ${updatedTicket.status}`);
   
   try {
-    // First attempt - use standard update
+    // Use standard update with the enum value
     const { error } = await supabase
       .from('tickets')
       .update({
-        status: updatedTicket.status, // Use status directly without modification
+        status: updatedTicket.status, // Use status directly as enum
         name: updatedTicket.name,
         email: updatedTicket.email,
         subject: updatedTicket.subject,
@@ -93,7 +94,7 @@ export const updateTicketStatus = async (updatedTicket: Ticket): Promise<void> =
     if (verifyUpdate && verifyUpdate.status !== updatedTicket.status) {
       console.log("Status didn't update correctly. Using direct SQL function.");
       
-      // Use RPC call to force the update
+      // Use RPC call to force the update (fallback)
       const { error: rpcError } = await supabase.rpc('force_update_ticket_status', {
         ticket_id: updatedTicket.id,
         new_status: updatedTicket.status

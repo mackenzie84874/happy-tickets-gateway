@@ -49,7 +49,7 @@ export type Database = {
           message: string
           name: string
           rating: number | null
-          status: string
+          status: Database["public"]["Enums"]["ticket_status"]
           subject: string
         }
         Insert: {
@@ -59,7 +59,7 @@ export type Database = {
           message: string
           name: string
           rating?: number | null
-          status?: string
+          status?: Database["public"]["Enums"]["ticket_status"]
           subject: string
         }
         Update: {
@@ -69,7 +69,7 @@ export type Database = {
           message?: string
           name?: string
           rating?: number | null
-          status?: string
+          status?: Database["public"]["Enums"]["ticket_status"]
           subject?: string
         }
         Relationships: []
@@ -79,6 +79,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_ticket_status: {
+        Args: {
+          ticket_id: string
+        }
+        Returns: string
+      }
       force_update_ticket_status: {
         Args: {
           ticket_id: string
@@ -88,7 +94,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      ticket_status: "open" | "inProgress" | "resolved" | "closed"
     }
     CompositeTypes: {
       [_ in never]: never

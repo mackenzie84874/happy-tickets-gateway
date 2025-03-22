@@ -27,15 +27,17 @@ export const fetchTickets = async (): Promise<Ticket[]> => {
   }
 
   if (data) {
+    console.log("Raw ticket data from database:", data);
+    
     // Process the tickets preserving their exact database status
     const tickets = data.map(ticket => ({
       ...ticket,
-      // Keep the status exactly as it comes from the database
+      // Ensure status is one of the valid enum values
       status: ticket.status as "open" | "inProgress" | "resolved" | "closed"
     }));
     
     // Debug: Log all fetched tickets and their statuses
-    console.log("Fetched tickets with statuses:", tickets.map(t => ({
+    console.log("Processed tickets with statuses:", tickets.map(t => ({
       id: t.id,
       subject: t.subject,
       status: t.status
@@ -60,9 +62,11 @@ export const fetchTicketById = async (id: string): Promise<Ticket | undefined> =
   }
 
   if (data) {
+    console.log("Fetched individual ticket data:", data);
+    
     return {
       ...data,
-      // Keep the status exactly as it comes from the database
+      // Ensure status is one of the valid enum values
       status: data.status as "open" | "inProgress" | "resolved" | "closed"
     };
   }
