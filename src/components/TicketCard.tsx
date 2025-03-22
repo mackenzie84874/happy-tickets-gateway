@@ -1,8 +1,8 @@
-
 import React, { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
-import { Ticket, useTickets } from "@/contexts/TicketContext";
+import { useTickets } from "@/contexts/TicketContext";
+import { Ticket } from "@/types/ticket";
 
 interface TicketCardProps {
   ticket: Ticket;

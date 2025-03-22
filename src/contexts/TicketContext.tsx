@@ -1,30 +1,17 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import React, { createContext, useState, useEffect, ReactNode } from "react";
 import { useToast } from "@/components/ui/use-toast";
-
-// Define the ticket interface
-export interface Ticket {
-  id: string;
-  name: string;
-  email: string;
-  subject: string;
-  message: string;
-  status: "open" | "inProgress" | "resolved";
-  created_at?: string;
-}
-
-// Define the context interface
-interface TicketContextType {
-  tickets: Ticket[];
-  addTicket: (ticket: Omit<Ticket, "id" | "created_at">) => Promise<string | undefined>;
-  updateTicket: (updatedTicket: Ticket) => void;
-  getTicketById: (id: string) => Promise<Ticket | undefined>;
-  subscribeToTicket: (id: string, callback: (ticket: Ticket) => void) => () => void;
-}
+import { Ticket, TicketContextType } from "@/types/ticket";
+import { 
+  fetchTickets, 
+  fetchTicketById, 
+  createTicket, 
+  updateTicketStatus,
+  subscribeToTicketUpdates
+} from "@/utils/ticketUtils";
 
 // Create the context
-const TicketContext = createContext<TicketContextType | undefined>(undefined);
+export const TicketContext = createContext<TicketContextType | undefined>(undefined);
 
 // Provider component
 export const TicketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -33,25 +20,10 @@ export const TicketProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   // Fetch tickets from Supabase on initial render
   useEffect(() => {
-    const fetchTickets = async () => {
+    const loadTickets = async () => {
       try {
-        const { data, error } = await supabase
-          .from('tickets')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          throw error;
-        }
-
-        if (data) {
-          // Convert status to the correct type
-          const formattedTickets = data.map(ticket => ({
-            ...ticket,
-            status: ticket.status as "open" | "inProgress" | "resolved"
-          }));
-          setTickets(formattedTickets);
-        }
+        const data = await fetchTickets();
+        setTickets(data);
       } catch (error) {
         console.error("Error fetching tickets:", error);
         toast({
@@ -62,26 +34,14 @@ export const TicketProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       }
     };
 
-    fetchTickets();
+    loadTickets();
   }, [toast]);
 
   const addTicket = async (ticketData: Omit<Ticket, "id" | "created_at">): Promise<string | undefined> => {
     try {
-      const { data, error } = await supabase
-        .from('tickets')
-        .insert([ticketData])
-        .select()
-        .single();
-
-      if (error) {
-        throw error;
-      }
-
-      if (data) {
-        const newTicket = {
-          ...data,
-          status: data.status as "open" | "inProgress" | "resolved"
-        };
+      const newTicket = await createTicket(ticketData);
+      
+      if (newTicket) {
         setTickets(prevTickets => [newTicket, ...prevTickets]);
         return newTicket.id;
       }
@@ -98,21 +58,8 @@ export const TicketProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const updateTicket = async (updatedTicket: Ticket): Promise<void> => {
     try {
-      const { error } = await supabase
-        .from('tickets')
-        .update({
-          name: updatedTicket.name,
-          email: updatedTicket.email,
-          subject: updatedTicket.subject,
-          message: updatedTicket.message,
-          status: updatedTicket.status
-        })
-        .eq('id', updatedTicket.id);
-
-      if (error) {
-        throw error;
-      }
-
+      await updateTicketStatus(updatedTicket);
+      
       setTickets(prevTickets =>
         prevTickets.map(ticket => 
           ticket.id === updatedTicket.id ? updatedTicket : ticket
@@ -130,22 +77,7 @@ export const TicketProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const getTicketById = async (id: string): Promise<Ticket | undefined> => {
     try {
-      const { data, error } = await supabase
-        .from('tickets')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (error) {
-        throw error;
-      }
-
-      if (data) {
-        return {
-          ...data,
-          status: data.status as "open" | "inProgress" | "resolved"
-        };
-      }
+      return await fetchTicketById(id);
     } catch (error) {
       console.error("Error fetching ticket:", error);
       toast({
@@ -157,49 +89,22 @@ export const TicketProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     return undefined;
   };
 
-  // Add a function to subscribe to real-time updates for a specific ticket
+  // Function to subscribe to real-time updates for a specific ticket
   const subscribeToTicket = (id: string, callback: (ticket: Ticket) => void) => {
-    console.log(`Subscribing to updates for ticket ${id}`);
+    // Subscribe to realtime updates
+    const unsubscribe = subscribeToTicketUpdates(id, (updatedTicket) => {
+      // Update the local state
+      setTickets(prevTickets =>
+        prevTickets.map(ticket => 
+          ticket.id === id ? updatedTicket : ticket
+        )
+      );
+      
+      // Call the callback with the updated ticket
+      callback(updatedTicket);
+    });
     
-    const channel = supabase
-      .channel(`ticket-${id}`)
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'tickets',
-        filter: `id=eq.${id}`
-      }, (payload) => {
-        console.log('Received real-time update:', payload);
-        if (payload.new) {
-          // Ensure we're creating a properly typed Ticket object
-          const updatedTicket: Ticket = {
-            id: payload.new.id,
-            name: payload.new.name,
-            email: payload.new.email,
-            subject: payload.new.subject,
-            message: payload.new.message,
-            status: payload.new.status as "open" | "inProgress" | "resolved",
-            created_at: payload.new.created_at
-          };
-          
-          // Update the local state
-          setTickets(prevTickets =>
-            prevTickets.map(ticket => 
-              ticket.id === id ? updatedTicket : ticket
-            )
-          );
-          
-          // Call the callback with the updated ticket
-          callback(updatedTicket);
-        }
-      })
-      .subscribe();
-    
-    // Return a cleanup function to unsubscribe when component unmounts
-    return () => {
-      console.log(`Unsubscribing from updates for ticket ${id}`);
-      supabase.removeChannel(channel);
-    };
+    return unsubscribe;
   };
 
   return (
@@ -209,11 +114,5 @@ export const TicketProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   );
 };
 
-// Custom hook for using the ticket context
-export const useTickets = (): TicketContextType => {
-  const context = useContext(TicketContext);
-  if (!context) {
-    throw new Error("useTickets must be used within a TicketProvider");
-  }
-  return context;
-};
+// Exporting from useTicketContext.ts now
+export { useTickets } from "@/hooks/useTicketContext";
