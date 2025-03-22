@@ -29,10 +29,12 @@ const StarRating: React.FC<StarRatingProps> = ({
     setIsSubmitting(true);
 
     try {
-      // Save rating to Supabase
+      // Save rating to Supabase with a type assertion to bypass TypeScript error
       const { error } = await supabase
         .from('tickets')
-        .update({ rating: value })
+        .update({ 
+          rating: value 
+        } as any)
         .eq('id', ticketId);
 
       if (error) {

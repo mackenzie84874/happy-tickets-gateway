@@ -48,6 +48,7 @@ export type Database = {
           id: string
           message: string
           name: string
+          rating: number | null
           status: string
           subject: string
         }
@@ -57,6 +58,7 @@ export type Database = {
           id?: string
           message: string
           name: string
+          rating?: number | null
           status?: string
           subject: string
         }
@@ -66,6 +68,7 @@ export type Database = {
           id?: string
           message?: string
           name?: string
+          rating?: number | null
           status?: string
           subject?: string
         }
