@@ -1,8 +1,11 @@
+
 import React, { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTickets } from "@/contexts/TicketContext";
 import { Ticket } from "@/types/ticket";
+import { Button } from "@/components/ui/button";
+import { MessageCircle, CheckCircle } from "lucide-react";
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -25,6 +28,16 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);
   };
+
+  const handleAccept = () => {
+    handleStatusChange("inProgress");
+  };
+  
+  const handleReply = () => {
+    // For now, just open the ticket detail
+    console.log("Reply to ticket:", ticket.id);
+    // Future implementation can open a reply modal or navigate to a reply page
+  };
   
   return (
     <div 
@@ -33,11 +46,11 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
         isExpanded ? "transform scale-[1.01]" : ""
       )}
     >
-      <div 
-        onClick={toggleExpand}
-        className="p-5 cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between"
-      >
-        <div>
+      <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between">
+        <div 
+          onClick={toggleExpand}
+          className="cursor-pointer flex-grow"
+        >
           <div className="flex items-center space-x-3 mb-2">
             <span 
               className={cn(
@@ -55,13 +68,40 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
           <p className="text-sm text-muted-foreground mt-1">From: {ticket.name} ({ticket.email})</p>
         </div>
         
-        <div className={cn(
-          "transform transition-transform duration-300", 
-          isExpanded ? "rotate-180" : ""
-        )}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="6 9 12 15 18 9"></polyline>
-          </svg>
+        <div className="flex items-center space-x-2 mt-4 sm:mt-0">
+          {ticket.status !== "resolved" && (
+            <>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleAccept}
+                disabled={ticket.status === "inProgress"}
+                className={ticket.status === "inProgress" ? "bg-yellow-50" : ""}
+              >
+                <CheckCircle className="mr-1 h-4 w-4" />
+                {ticket.status === "inProgress" ? "Accepted" : "Accept"}
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleReply}
+              >
+                <MessageCircle className="mr-1 h-4 w-4" />
+                Reply
+              </Button>
+            </>
+          )}
+          <div 
+            className={cn(
+              "cursor-pointer transform transition-transform duration-300 ml-2", 
+              isExpanded ? "rotate-180" : ""
+            )}
+            onClick={toggleExpand}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
         </div>
       </div>
       
