@@ -62,6 +62,10 @@ export const updateTicketStatus = async (updatedTicket: Ticket): Promise<void> =
   console.log(`Updating ticket ${updatedTicket.id} status to: ${updatedTicket.status}`);
   
   try {
+    // For debugging - log the exact value we're sending
+    console.log("Raw status value being sent:", updatedTicket.status);
+    console.log("Type of status:", typeof updatedTicket.status);
+    
     // Use standard update with the enum value
     const { error } = await supabase
       .from('tickets')

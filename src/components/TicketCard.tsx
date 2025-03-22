@@ -18,6 +18,7 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
   const { updateTicket, addReply } = useTickets();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isReplyOpen, setIsReplyOpen] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const { toast } = useToast();
   
   const handleStatusChange = async (newStatus: "open" | "inProgress" | "resolved" | "closed") => {
@@ -31,8 +32,17 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
       return;
     }
     
+    setIsUpdating(true);
+    
     try {
-      await updateTicket({ ...ticket, status: newStatus });
+      console.log(`Changing ticket ${ticket.id} status from ${ticket.status} to ${newStatus}`);
+      
+      const updatedTicket = {
+        ...ticket,
+        status: newStatus
+      };
+      
+      await updateTicket(updatedTicket);
       
       // Show success toast
       toast({
@@ -46,6 +56,8 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
         description: "Failed to update ticket status. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsUpdating(false);
     }
   };
   
@@ -88,7 +100,8 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
       <div 
         className={cn(
           "border rounded-lg bg-card shadow-sm overflow-hidden transition-all duration-300",
-          isExpanded ? "transform scale-[1.01]" : ""
+          isExpanded ? "transform scale-[1.01]" : "",
+          isUpdating ? "opacity-70" : ""
         )}
       >
         <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between">

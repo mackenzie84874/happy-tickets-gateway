@@ -61,7 +61,7 @@ const AdminDashboard: React.FC = () => {
               onCheckedChange={setShowResolved}
             />
             <Label htmlFor="show-resolved" className="cursor-pointer">
-              Show Resolved Tickets
+              Show Resolved/Closed Tickets
             </Label>
           </div>
         </div>
