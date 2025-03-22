@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Ticket, TicketReply } from "@/types/ticket";
 
@@ -64,7 +65,7 @@ export const createTicket = async (ticketData: Omit<Ticket, "id" | "created_at">
 };
 
 export const updateTicketStatus = async (updatedTicket: Ticket): Promise<void> => {
-  const validStatus = ["open", "inProgress", "resolved"].includes(updatedTicket.status) 
+  const validStatus = ["open", "inProgress", "resolved", "closed"].includes(updatedTicket.status) 
     ? updatedTicket.status
     : "open";
     
@@ -75,7 +76,8 @@ export const updateTicketStatus = async (updatedTicket: Ticket): Promise<void> =
       email: updatedTicket.email,
       subject: updatedTicket.subject,
       message: updatedTicket.message,
-      status: validStatus
+      status: validStatus,
+      rating: updatedTicket.rating
     })
     .eq('id', updatedTicket.id);
 

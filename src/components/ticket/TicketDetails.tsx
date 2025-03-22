@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import TicketStatusBadge from "./TicketStatusBadge";
 import TicketStatusMessage from "./TicketStatusMessage";
 import TicketReplies from "./TicketReplies";
+import StarRating from "./StarRating";
 
 interface TicketDetailsProps {
   ticket: Ticket;
@@ -85,6 +86,12 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({
             </p>
           </div>
         </div>
+        
+        {ticket.status === "closed" && (
+          <div className="p-4 bg-gray-50 rounded-lg border">
+            <StarRating ticketId={ticket.id} initialRating={ticket.rating} />
+          </div>
+        )}
         
         <TicketReplies replies={replies} isLoading={repliesLoading} />
       </CardContent>

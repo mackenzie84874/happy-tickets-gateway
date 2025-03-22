@@ -7,6 +7,7 @@ export interface Ticket {
   message: string;
   status: "open" | "inProgress" | "resolved" | "closed";
   created_at?: string;
+  rating?: number;
 }
 
 export interface TicketReply {
