@@ -37,7 +37,7 @@ export const createTicket = async (ticketData: Omit<Ticket, "id" | "created_at">
   }
 };
 
-export const updateTicketStatus = async (updatedTicket: Ticket): Promise<Ticket> => {
+export const updateTicketStatus = async (updatedTicket: Ticket): Promise<void> => {
   console.log("updateTicketStatus called with ticket:", {
     id: updatedTicket.id,
     status: updatedTicket.status,
@@ -54,16 +54,19 @@ export const updateTicketStatus = async (updatedTicket: Ticket): Promise<Ticket>
     
     if (existingTicket && existingTicket.status === "closed") {
       console.log(`Ticket ${updatedTicket.id} is already closed and cannot be changed.`);
-      return updatedTicket;
+      return;
     }
   }
   
+  // The critical update: directly set the status in the database
+  console.log(`Updating ticket ${updatedTicket.id} status to: ${updatedTicket.status}`);
+  
   try {
     // For debugging - log the exact value we're sending
-    console.log("Status being updated:", updatedTicket.status);
+    console.log("Raw status value being sent:", updatedTicket.status);
     console.log("Type of status:", typeof updatedTicket.status);
     
-    // Use RPC function which has been updated to properly cast the status
+    // First try using force_update_ticket_status function (more reliable with enum types)
     const { error: rpcError } = await supabase.rpc('force_update_ticket_status', {
       ticket_id: updatedTicket.id,
       new_status: updatedTicket.status
@@ -73,7 +76,7 @@ export const updateTicketStatus = async (updatedTicket: Ticket): Promise<Ticket>
       console.error("Error in force_update_ticket_status:", rpcError);
       
       // Fallback to standard update if RPC fails
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('tickets')
         .update({
           status: updatedTicket.status,
@@ -83,49 +86,25 @@ export const updateTicketStatus = async (updatedTicket: Ticket): Promise<Ticket>
           message: updatedTicket.message,
           rating: updatedTicket.rating
         })
-        .eq('id', updatedTicket.id)
-        .select();
+        .eq('id', updatedTicket.id);
 
       if (error) {
         console.error("Error updating ticket in Supabase:", error);
         throw error;
       }
-      
-      if (data && data.length > 0) {
-        console.log("Ticket updated through standard update:", data[0]);
-        return {
-          ...data[0],
-          status: data[0].status as "open" | "inProgress" | "resolved" | "closed"
-        };
-      }
     } else {
       console.log("Status updated successfully via force_update_ticket_status");
     }
     
-    // After update, fetch the latest data to ensure we have the current state
-    const { data: verifyUpdate, error: verifyError } = await supabase
+    // Verify the update was successful by checking the current database state
+    const { data: verifyUpdate } = await supabase
       .from('tickets')
-      .select('*')
+      .select('id, status')
       .eq('id', updatedTicket.id)
       .single();
       
-    if (verifyError) {
-      console.error("Error verifying ticket update:", verifyError);
-      throw verifyError;
-    }
-    
-    if (verifyUpdate) {
-      console.log(`Ticket ${updatedTicket.id} verified status:`, verifyUpdate.status);
-      console.log("Updated ticket data:", verifyUpdate);
-      
-      return {
-        ...verifyUpdate,
-        status: verifyUpdate.status as "open" | "inProgress" | "resolved" | "closed"
-      };
-    }
-    
-    // If we couldn't verify but no errors occurred, return the original updated ticket
-    return updatedTicket;
+    console.log(`Ticket ${updatedTicket.id} updated to status:`, verifyUpdate?.status);
+    console.log("Updated ticket verified in database:", verifyUpdate);
   } catch (err) {
     console.error("Error updating ticket status:", err);
     throw err;

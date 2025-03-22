@@ -41,38 +41,6 @@ export type Database = {
           },
         ]
       }
-      ticket_status_logs: {
-        Row: {
-          created_at: string | null
-          id: string
-          new_status: Database["public"]["Enums"]["ticket_status"] | null
-          old_status: Database["public"]["Enums"]["ticket_status"] | null
-          ticket_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          new_status?: Database["public"]["Enums"]["ticket_status"] | null
-          old_status?: Database["public"]["Enums"]["ticket_status"] | null
-          ticket_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          new_status?: Database["public"]["Enums"]["ticket_status"] | null
-          old_status?: Database["public"]["Enums"]["ticket_status"] | null
-          ticket_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ticket_status_logs_ticket_id_fkey"
-            columns: ["ticket_id"]
-            isOneToOne: false
-            referencedRelation: "tickets"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       tickets: {
         Row: {
           created_at: string
