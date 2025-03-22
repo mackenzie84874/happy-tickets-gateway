@@ -1,15 +1,16 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTickets } from "@/hooks/useTicketContext";
 import { Ticket, TicketStatusCounts } from "@/types/ticket";
+import { fetchTickets } from "@/utils/tickets";
 
 export const useAdminDashboard = () => {
   const navigate = useNavigate();
-  const { tickets } = useTickets();
+  const { tickets: allTickets, updateTicket } = useTickets();
+  const [tickets, setTickets] = useState<Ticket[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [filter, setFilter] = useState<"all" | "open" | "inProgress" | "resolved" | "closed">("all"); // Default to "all" filter
-  const [showResolved, setShowResolved] = useState(true); // Default to showing all tickets including resolved/closed
+  const [filter, setFilter] = useState<"all" | "open" | "inProgress" | "resolved" | "closed">("open"); // Default to "open" filter
+  const [showResolved, setShowResolved] = useState(false); // Default to NOT showing resolved/closed tickets
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
@@ -21,13 +22,52 @@ export const useAdminDashboard = () => {
       setIsAdmin(true);
     }
     
-    // Set loading to false after a short delay to simulate data loading
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
+    // Fetch only open tickets on initial load
+    const fetchInitialTickets = async () => {
+      try {
+        setIsLoading(true);
+        const openTickets = await fetchTickets("open");
+        setTickets(openTickets);
+      } catch (error) {
+        console.error("Error fetching open tickets:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
     
-    return () => clearTimeout(timer);
+    fetchInitialTickets();
   }, [navigate]);
+  
+  // Handle filter changes
+  useEffect(() => {
+    const fetchFilteredTickets = async () => {
+      try {
+        setIsLoading(true);
+        if (filter === "all") {
+          // Fetch all tickets if "all" is selected and showResolved is true
+          // Otherwise fetch only open and inProgress tickets
+          if (showResolved) {
+            setTickets(allTickets);
+          } else {
+            const openInProgressTickets = allTickets.filter(
+              t => t.status === "open" || t.status === "inProgress"
+            );
+            setTickets(openInProgressTickets);
+          }
+        } else {
+          // Fetch tickets with specific status
+          const filteredTickets = await fetchTickets(filter);
+          setTickets(filteredTickets);
+        }
+      } catch (error) {
+        console.error(`Error fetching ${filter} tickets:`, error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchFilteredTickets();
+  }, [filter, showResolved, allTickets]);
   
   // Debug - log all tickets and their statuses
   useEffect(() => {
@@ -45,26 +85,18 @@ export const useAdminDashboard = () => {
     navigate("/admin");
   };
   
-  // Apply filters correctly
-  const filteredTickets = tickets
-    .filter(ticket => {
-      if (!showResolved) {
-        return ticket.status !== "resolved" && ticket.status !== "closed";
-      }
-      return true;
-    })
-    .filter(ticket => {
-      if (filter === "all") return true;
-      return ticket.status === filter;
-    });
+  // Apply filters correctly for display
+  const filteredTickets = showResolved 
+    ? tickets 
+    : tickets.filter(ticket => ticket.status !== "resolved" && ticket.status !== "closed");
   
   // Count tickets by status
   const countByStatus: TicketStatusCounts = {
-    all: tickets.length,
-    open: tickets.filter(ticket => ticket.status === "open").length,
-    inProgress: tickets.filter(ticket => ticket.status === "inProgress").length,
-    resolved: tickets.filter(ticket => ticket.status === "resolved").length,
-    closed: tickets.filter(ticket => ticket.status === "closed").length,
+    all: allTickets.length,
+    open: allTickets.filter(ticket => ticket.status === "open").length,
+    inProgress: allTickets.filter(ticket => ticket.status === "inProgress").length,
+    resolved: allTickets.filter(ticket => ticket.status === "resolved").length,
+    closed: allTickets.filter(ticket => ticket.status === "closed").length,
   };
 
   return {
@@ -76,6 +108,17 @@ export const useAdminDashboard = () => {
     filteredTickets,
     countByStatus,
     handleLogout,
-    isLoading
+    isLoading,
+    refreshTickets: async () => {
+      setIsLoading(true);
+      try {
+        const freshTickets = await fetchTickets(filter === "all" ? undefined : filter);
+        setTickets(freshTickets);
+      } catch (error) {
+        console.error("Error refreshing tickets:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
   };
 };

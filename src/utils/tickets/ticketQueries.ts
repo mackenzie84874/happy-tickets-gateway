@@ -2,8 +2,8 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Ticket } from "@/types/ticket";
 
-export const fetchTickets = async (): Promise<Ticket[]> => {
-  console.log("Fetching all tickets from database");
+export const fetchTickets = async (status?: "open" | "inProgress" | "resolved" | "closed"): Promise<Ticket[]> => {
+  console.log(`Fetching tickets${status ? ` with status: ${status}` : ''} from database`);
   
   // Check if table has the correct columns and data
   const { data: tableInfo, error: tableError } = await supabase
@@ -15,11 +15,16 @@ export const fetchTickets = async (): Promise<Ticket[]> => {
     console.log("Sample database ticket data:", tableInfo);
   }
   
-  // Fetch all tickets with explicit ordering
-  const { data, error } = await supabase
-    .from('tickets')
-    .select('*')
-    .order('created_at', { ascending: false });
+  // Build the query
+  let query = supabase.from('tickets').select('*');
+  
+  // Apply status filter if provided
+  if (status) {
+    query = query.eq('status', status);
+  }
+  
+  // Execute the query with ordering
+  const { data, error } = await query.order('created_at', { ascending: false });
 
   if (error) {
     console.error("Error fetching tickets:", error);
@@ -27,7 +32,7 @@ export const fetchTickets = async (): Promise<Ticket[]> => {
   }
 
   if (data) {
-    console.log("Raw ticket data from database:", data);
+    console.log(`Raw ticket data from database (${data.length} tickets):`, data);
     
     // Process the tickets preserving their exact database status
     const tickets = data.map(ticket => ({

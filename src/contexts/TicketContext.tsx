@@ -10,6 +10,7 @@ import {
   subscribeToTicketUpdates,
   createReply
 } from "@/utils/tickets";
+import { supabase } from "@/integrations/supabase/client";
 
 // Create the context
 export const TicketContext = createContext<TicketContextType | undefined>(undefined);
@@ -38,14 +39,24 @@ export const TicketProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     loadTickets();
     
-    // Set up real-time subscription for ticket updates
-    // This helps keep the UI in sync with database changes
-    const subscribeToAllTickets = () => {
-      // Implementation would go here if needed
-    };
+    // Set up real-time subscription for all ticket updates
+    const channel = supabase
+      .channel('public:tickets')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'tickets'
+      }, async (payload) => {
+        console.log('Received real-time update for tickets table:', payload);
+        
+        // Refresh the entire ticket list to ensure consistency
+        const freshTickets = await fetchTickets();
+        setTickets(freshTickets);
+      })
+      .subscribe();
     
     return () => {
-      // Cleanup subscription if needed
+      supabase.removeChannel(channel);
     };
   }, [toast]);
 

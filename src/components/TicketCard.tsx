@@ -48,7 +48,7 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
       
       // Show success toast
       toast({
-        title: `Ticket ${newStatus === "inProgress" ? "accepted" : "updated"}`,
+        title: `Ticket ${newStatus === "inProgress" ? "accepted" : newStatus}`,
         description: `Ticket status changed to ${newStatus === "inProgress" ? "In Progress" : newStatus}`,
       });
     } catch (error) {

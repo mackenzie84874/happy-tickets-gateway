@@ -58,15 +58,11 @@ export const updateTicketStatus = async (updatedTicket: Ticket): Promise<void> =
     }
   }
   
-  // The critical update: directly set the status in the database
-  console.log(`Updating ticket ${updatedTicket.id} status to: ${updatedTicket.status}`);
-  
   try {
-    // For debugging - log the exact value we're sending
-    console.log("Raw status value being sent:", updatedTicket.status);
-    console.log("Type of status:", typeof updatedTicket.status);
+    // Log the status for debugging
+    console.log("Updating ticket status to:", updatedTicket.status);
     
-    // First try using force_update_ticket_status function (more reliable with enum types)
+    // Use RPC function to update the status - this converts the string to enum properly
     const { error: rpcError } = await supabase.rpc('force_update_ticket_status', {
       ticket_id: updatedTicket.id,
       new_status: updatedTicket.status
@@ -75,16 +71,11 @@ export const updateTicketStatus = async (updatedTicket: Ticket): Promise<void> =
     if (rpcError) {
       console.error("Error in force_update_ticket_status:", rpcError);
       
-      // Fallback to standard update if RPC fails
+      // Fallback to direct update if RPC fails
       const { error } = await supabase
         .from('tickets')
         .update({
-          status: updatedTicket.status,
-          name: updatedTicket.name,
-          email: updatedTicket.email,
-          subject: updatedTicket.subject,
-          message: updatedTicket.message,
-          rating: updatedTicket.rating
+          status: updatedTicket.status
         })
         .eq('id', updatedTicket.id);
 
@@ -92,11 +83,9 @@ export const updateTicketStatus = async (updatedTicket: Ticket): Promise<void> =
         console.error("Error updating ticket in Supabase:", error);
         throw error;
       }
-    } else {
-      console.log("Status updated successfully via force_update_ticket_status");
     }
     
-    // Verify the update was successful by checking the current database state
+    // Verify the update was successful
     const { data: verifyUpdate } = await supabase
       .from('tickets')
       .select('id, status')
@@ -104,7 +93,6 @@ export const updateTicketStatus = async (updatedTicket: Ticket): Promise<void> =
       .single();
       
     console.log(`Ticket ${updatedTicket.id} updated to status:`, verifyUpdate?.status);
-    console.log("Updated ticket verified in database:", verifyUpdate);
   } catch (err) {
     console.error("Error updating ticket status:", err);
     throw err;
