@@ -9,6 +9,7 @@ export const fetchTickets = async (): Promise<Ticket[]> => {
     .order('created_at', { ascending: false });
 
   if (error) {
+    console.error("Error fetching tickets:", error);
     throw error;
   }
 
@@ -30,6 +31,7 @@ export const fetchTicketById = async (id: string): Promise<Ticket | undefined> =
     .single();
 
   if (error) {
+    console.error("Error fetching ticket by ID:", error);
     throw error;
   }
 
@@ -44,21 +46,30 @@ export const fetchTicketById = async (id: string): Promise<Ticket | undefined> =
 };
 
 export const createTicket = async (ticketData: Omit<Ticket, "id" | "created_at">): Promise<Ticket | undefined> => {
-  const { data, error } = await supabase
-    .from('tickets')
-    .insert([ticketData])
-    .select()
-    .single();
+  console.log("Creating ticket with data:", ticketData);
+  
+  try {
+    const { data, error } = await supabase
+      .from('tickets')
+      .insert([ticketData])
+      .select()
+      .single();
 
-  if (error) {
-    throw error;
-  }
+    if (error) {
+      console.error("Supabase error creating ticket:", error);
+      throw error;
+    }
 
-  if (data) {
-    return {
-      ...data,
-      status: data.status as "open" | "inProgress" | "resolved"
-    };
+    if (data) {
+      console.log("Ticket created successfully:", data);
+      return {
+        ...data,
+        status: data.status as "open" | "inProgress" | "resolved"
+      };
+    }
+  } catch (err) {
+    console.error("Error in createTicket function:", err);
+    throw err;
   }
   
   return undefined;

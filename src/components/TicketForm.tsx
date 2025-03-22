@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTickets } from "@/hooks/useTicketContext";
@@ -39,6 +40,7 @@ const TicketForm: React.FC = () => {
     setIsSubmitting(true);
     
     try {
+      // Create ticket data with explicit status
       const ticketData = {
         name: values.name,
         email: values.email,
@@ -47,21 +49,28 @@ const TicketForm: React.FC = () => {
         status: "open" as "open" | "inProgress" | "resolved",
       };
       
+      // Attempt to add the ticket and get the ID
       const ticketId = await addTicket(ticketData);
       
       if (ticketId) {
+        // Reset form and navigate on success
         form.reset();
+        toast({
+          title: "Success!",
+          description: "Your ticket has been submitted successfully.",
+          variant: "default",
+        });
         navigate(`/ticket-submitted?id=${ticketId}`);
       } else {
         throw new Error("Failed to submit ticket");
       }
     } catch (err) {
+      console.error("Ticket submission error:", err);
       toast({
         title: "Error",
         description: "There was an error submitting your ticket. Please try again.",
         variant: "destructive",
       });
-      console.error(err);
     } finally {
       setIsSubmitting(false);
     }
@@ -135,7 +144,7 @@ const TicketForm: React.FC = () => {
         
         <Button
           type="submit"
-          className="w-full"
+          className="w-full bg-primary hover:bg-primary/90 text-white font-medium py-2"
           disabled={isSubmitting}
         >
           {isSubmitting ? "Submitting..." : "Submit Ticket"}
