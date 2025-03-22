@@ -16,6 +16,9 @@ const TicketStatusButtons: React.FC<TicketStatusButtonsProps> = ({
 }) => {
   const handleStatusClick = (status: "open" | "inProgress" | "resolved" | "closed") => {
     if (isUpdating || ticket.status === status) return;
+    
+    // Log the status change attempt for debugging
+    console.log(`TicketStatusButtons - Changing status from ${ticket.status} to ${status}`);
     onStatusChange(status);
   };
 
@@ -32,6 +35,7 @@ const TicketStatusButtons: React.FC<TicketStatusButtonsProps> = ({
               isUpdating && "opacity-50 cursor-not-allowed"
             )}
             disabled={isUpdating}
+            data-status="open"
           >
             Open
           </button>
@@ -43,6 +47,7 @@ const TicketStatusButtons: React.FC<TicketStatusButtonsProps> = ({
               isUpdating && "opacity-50 cursor-not-allowed"
             )}
             disabled={isUpdating}
+            data-status="inProgress"
           >
             In Progress
           </button>
@@ -54,6 +59,7 @@ const TicketStatusButtons: React.FC<TicketStatusButtonsProps> = ({
               isUpdating && "opacity-50 cursor-not-allowed"
             )}
             disabled={isUpdating}
+            data-status="resolved"
           >
             Resolved
           </button>
@@ -67,6 +73,7 @@ const TicketStatusButtons: React.FC<TicketStatusButtonsProps> = ({
           (isUpdating || ticket.status === "closed") && "opacity-50 cursor-not-allowed"
         )}
         disabled={isUpdating || ticket.status === "closed"}
+        data-status="closed"
       >
         Close
       </button>

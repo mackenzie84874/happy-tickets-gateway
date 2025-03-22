@@ -26,6 +26,14 @@ export interface TicketStatusCounts {
   closed: number;
 }
 
+export interface TicketStatusLog {
+  id: string;
+  ticket_id: string;
+  old_status: "open" | "inProgress" | "resolved" | "closed";
+  new_status: "open" | "inProgress" | "resolved" | "closed";
+  created_at: string;
+}
+
 export interface TicketContextType {
   tickets: Ticket[];
   isLoading: boolean;
