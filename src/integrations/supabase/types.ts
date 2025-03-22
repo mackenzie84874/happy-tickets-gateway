@@ -79,7 +79,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      force_update_ticket_status: {
+        Args: {
+          ticket_id: string
+          new_status: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
