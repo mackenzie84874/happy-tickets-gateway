@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Ticket, TicketReply } from "@/types/ticket";
 
@@ -49,8 +48,7 @@ export const createTicket = async (ticketData: Omit<Ticket, "id" | "created_at">
   console.log("Creating ticket with data:", ticketData);
   
   try {
-    // For guest submissions, we need to use the .auth.anon key which should have appropriate permissions
-    // We also need to ensure the correct schema is used - explicitly adding all required columns
+    // For guest submissions with explicit columns to match the database schema
     const { data, error } = await supabase
       .from('tickets')
       .insert([{
@@ -60,27 +58,26 @@ export const createTicket = async (ticketData: Omit<Ticket, "id" | "created_at">
         message: ticketData.message,
         status: ticketData.status || 'open',
       }])
-      .select()
-      .single();
+      .select();
 
     if (error) {
       console.error("Supabase error creating ticket:", error);
-      throw error;
+      throw new Error(`Failed to create ticket: ${error.message || error.details || "Unknown error"}`);
     }
 
-    if (data) {
-      console.log("Ticket created successfully:", data);
+    if (data && data.length > 0) {
+      console.log("Ticket created successfully:", data[0]);
       return {
-        ...data,
-        status: data.status as "open" | "inProgress" | "resolved"
+        ...data[0],
+        status: data[0].status as "open" | "inProgress" | "resolved"
       };
+    } else {
+      throw new Error("No data returned after ticket creation");
     }
   } catch (err) {
     console.error("Error in createTicket function:", err);
     throw err;
   }
-  
-  return undefined;
 };
 
 export const updateTicketStatus = async (updatedTicket: Ticket): Promise<void> => {

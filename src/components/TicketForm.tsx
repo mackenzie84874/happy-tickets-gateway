@@ -11,6 +11,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
 
+// Define form validation schema
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
@@ -25,6 +26,7 @@ const TicketForm: React.FC = () => {
   const { addTicket } = useTickets();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -38,8 +40,11 @@ const TicketForm: React.FC = () => {
   
   const onSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
+    setSubmitError(null);
     
     try {
+      console.log("Submitting ticket with values:", values);
+      
       // Create ticket data with explicit status
       const ticketData = {
         name: values.name,
@@ -62,10 +67,11 @@ const TicketForm: React.FC = () => {
         });
         navigate(`/ticket-submitted?id=${ticketId}`);
       } else {
-        throw new Error("Failed to submit ticket");
+        throw new Error("Failed to submit ticket - no ID returned");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Ticket submission error:", err);
+      setSubmitError(err?.message || "There was an error submitting your ticket");
       toast({
         title: "Error",
         description: "There was an error submitting your ticket. Please try again.",
@@ -141,6 +147,12 @@ const TicketForm: React.FC = () => {
             </FormItem>
           )}
         />
+        
+        {submitError && (
+          <div className="p-3 rounded-md bg-red-50 border border-red-200 text-red-800 text-sm">
+            <p>Error: {submitError}</p>
+          </div>
+        )}
         
         <Button
           type="submit"
