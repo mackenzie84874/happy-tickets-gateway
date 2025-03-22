@@ -37,11 +37,13 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
     try {
       console.log(`Changing ticket ${ticket.id} status from ${ticket.status} to ${newStatus}`);
       
+      // Create a complete updatedTicket object
       const updatedTicket = {
         ...ticket,
         status: newStatus
       };
       
+      // Send the status update to the server
       await updateTicket(updatedTicket);
       
       // Show success toast

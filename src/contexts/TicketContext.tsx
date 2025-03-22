@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect, ReactNode } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Ticket, TicketContextType } from "@/types/ticket";
@@ -69,6 +70,12 @@ export const TicketProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const updateTicket = async (updatedTicket: Ticket): Promise<void> => {
     try {
+      console.log("TicketContext - Starting ticket update:", {
+        id: updatedTicket.id,
+        status: updatedTicket.status,
+        statusType: typeof updatedTicket.status
+      });
+      
       // Make sure we're sending the exact status to the database
       await updateTicketStatus(updatedTicket);
       
@@ -78,6 +85,8 @@ export const TicketProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           ticket.id === updatedTicket.id ? updatedTicket : ticket
         )
       );
+      
+      console.log("TicketContext - Local state updated");
     } catch (error) {
       console.error("Error updating ticket:", error);
       toast({
@@ -85,6 +94,7 @@ export const TicketProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         description: "There was a problem updating the ticket.",
         variant: "destructive"
       });
+      throw error; // Re-throw to allow component to handle the error
     }
   };
 
