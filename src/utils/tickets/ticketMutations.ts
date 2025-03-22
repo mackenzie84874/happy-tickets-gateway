@@ -57,35 +57,18 @@ export const updateTicketStatus = async (updatedTicket: Ticket): Promise<void> =
     }
   }
   
-  // Only accept valid statuses
-  const validStatuses = ["open", "inProgress", "resolved", "closed"];
-  const validStatus = validStatuses.includes(updatedTicket.status) 
-    ? updatedTicket.status
-    : "open";
-    
-  // Log the status before update for debugging
-  console.log(`Updating ticket ${updatedTicket.id} status to: ${validStatus}`);
+  // Do a direct update with the status as is - don't validate or change it
+  console.log(`Updating ticket ${updatedTicket.id} status to: ${updatedTicket.status}`);
   
-  // Verify actual table structure in database
-  const { data: tableStructure, error: tableError } = await supabase
-    .from('tickets')
-    .select('id, status')
-    .eq('id', updatedTicket.id)
-    .single();
-    
-  if (tableStructure) {
-    console.log("Current ticket state in database:", tableStructure);
-  }
-  
-  // Perform the update with explicit status conversion
+  // Perform the update with the exact status from the ticket object
   const { error, data } = await supabase
     .from('tickets')
     .update({
+      status: updatedTicket.status, // Use the status directly without modification
       name: updatedTicket.name,
       email: updatedTicket.email,
       subject: updatedTicket.subject,
       message: updatedTicket.message,
-      status: validStatus, // Ensure this is explicitly set as a string
       rating: updatedTicket.rating
     })
     .eq('id', updatedTicket.id)
@@ -103,6 +86,6 @@ export const updateTicketStatus = async (updatedTicket: Ticket): Promise<void> =
     .eq('id', updatedTicket.id)
     .single();
     
-  console.log(`Ticket ${updatedTicket.id} updated to status: ${validStatus}`, data);
+  console.log(`Ticket ${updatedTicket.id} updated to status: ${updatedTicket.status}`, data);
   console.log("Updated ticket verified in database:", verifyUpdate);
 };

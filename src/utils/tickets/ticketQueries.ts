@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Ticket } from "@/types/ticket";
 
@@ -26,28 +25,21 @@ export const fetchTickets = async (): Promise<Ticket[]> => {
   }
 
   if (data) {
-    // Convert string statuses to our expected types and log them
-    const formattedTickets = data.map(ticket => {
-      const validStatuses = ["open", "inProgress", "resolved", "closed"];
-      // Make sure the status is valid, defaulting to "open" if not
-      const validStatus = validStatuses.includes(ticket.status) 
-        ? ticket.status 
-        : "open";
-        
-      return {
-        ...ticket,
-        status: validStatus as "open" | "inProgress" | "resolved" | "closed"
-      };
-    });
+    // Process the tickets without modifying their status
+    const tickets = data.map(ticket => ({
+      ...ticket,
+      // Keep the status exactly as it comes from the database
+      status: ticket.status as "open" | "inProgress" | "resolved" | "closed"
+    }));
     
     // Debug: Log all fetched tickets and their statuses
-    console.log("Fetched tickets with statuses:", formattedTickets.map(t => ({
+    console.log("Fetched tickets with statuses:", tickets.map(t => ({
       id: t.id,
       subject: t.subject,
       status: t.status
     })));
     
-    return formattedTickets;
+    return tickets;
   }
   
   return [];
@@ -66,15 +58,10 @@ export const fetchTicketById = async (id: string): Promise<Ticket | undefined> =
   }
 
   if (data) {
-    const validStatuses = ["open", "inProgress", "resolved", "closed"];
-    // Make sure the status is valid, defaulting to "open" if not
-    const validStatus = validStatuses.includes(data.status) 
-      ? data.status 
-      : "open";
-      
     return {
       ...data,
-      status: validStatus as "open" | "inProgress" | "resolved" | "closed"
+      // Keep the status exactly as it comes from the database
+      status: data.status as "open" | "inProgress" | "resolved" | "closed"
     };
   }
   
