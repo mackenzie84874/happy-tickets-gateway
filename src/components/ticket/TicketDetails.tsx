@@ -2,19 +2,27 @@
 import React from "react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
-import { Ticket } from "@/types/ticket";
+import { Ticket, TicketReply } from "@/types/ticket";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import TicketStatusBadge from "./TicketStatusBadge";
 import TicketStatusMessage from "./TicketStatusMessage";
+import TicketReplies from "./TicketReplies";
 
 interface TicketDetailsProps {
   ticket: Ticket;
   isUpdating: boolean;
+  replies: TicketReply[];
+  repliesLoading: boolean;
 }
 
-const TicketDetails: React.FC<TicketDetailsProps> = ({ ticket, isUpdating }) => {
+const TicketDetails: React.FC<TicketDetailsProps> = ({ 
+  ticket, 
+  isUpdating, 
+  replies, 
+  repliesLoading 
+}) => {
   return (
     <Card className={`shadow-sm transition-all duration-300 ${isUpdating ? 'ring-2 ring-primary animate-pulse' : ''}`}>
       <CardHeader>
@@ -77,6 +85,8 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({ ticket, isUpdating }) => 
             </p>
           </div>
         </div>
+        
+        <TicketReplies replies={replies} isLoading={repliesLoading} />
       </CardContent>
       
       <CardFooter className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4 sm:justify-end">

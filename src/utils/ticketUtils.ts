@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { Ticket } from "@/types/ticket";
+import { Ticket, TicketReply } from "@/types/ticket";
 
 export const fetchTickets = async (): Promise<Ticket[]> => {
   const { data, error } = await supabase
@@ -12,7 +12,6 @@ export const fetchTickets = async (): Promise<Ticket[]> => {
   }
 
   if (data) {
-    // Convert status to the correct type
     return data.map(ticket => ({
       ...ticket,
       status: ticket.status as "open" | "inProgress" | "resolved"
@@ -101,7 +100,6 @@ export const subscribeToTicketUpdates = (id: string, callback: (ticket: Ticket) 
     }, (payload) => {
       console.log('Received real-time update:', payload);
       if (payload.new) {
-        // Ensure we're creating a properly typed Ticket object
         const updatedTicket: Ticket = {
           id: payload.new.id,
           name: payload.new.name,
@@ -112,15 +110,79 @@ export const subscribeToTicketUpdates = (id: string, callback: (ticket: Ticket) 
           created_at: payload.new.created_at
         };
         
-        // Call the callback with the updated ticket
         callback(updatedTicket);
       }
     })
     .subscribe();
   
-  // Return a cleanup function to unsubscribe when component unmounts
   return () => {
     console.log(`Unsubscribing from updates for ticket ${id}`);
+    supabase.removeChannel(channel);
+  };
+};
+
+export const createReply = async (
+  ticketId: string, 
+  adminName: string, 
+  message: string
+): Promise<TicketReply | undefined> => {
+  const { data, error } = await supabase
+    .from('ticket_replies')
+    .insert([{
+      ticket_id: ticketId,
+      admin_name: adminName,
+      message: message
+    }])
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error creating reply in Supabase:", error);
+    throw error;
+  }
+
+  if (data) {
+    return data as TicketReply;
+  }
+  
+  return undefined;
+};
+
+export const fetchReplies = async (ticketId: string): Promise<TicketReply[]> => {
+  const { data, error } = await supabase
+    .from('ticket_replies')
+    .select('*')
+    .eq('ticket_id', ticketId)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error("Error fetching replies from Supabase:", error);
+    throw error;
+  }
+
+  return data as TicketReply[] || [];
+};
+
+export const subscribeToReplies = (ticketId: string, callback: (reply: TicketReply) => void) => {
+  console.log(`Subscribing to replies for ticket ${ticketId}`);
+  
+  const channel = supabase
+    .channel(`replies-${ticketId}`)
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'ticket_replies',
+      filter: `ticket_id=eq.${ticketId}`
+    }, (payload) => {
+      console.log('Received new reply:', payload);
+      if (payload.new) {
+        callback(payload.new as TicketReply);
+      }
+    })
+    .subscribe();
+  
+  return () => {
+    console.log(`Unsubscribing from replies for ticket ${ticketId}`);
     supabase.removeChannel(channel);
   };
 };

@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, ReactNode } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Ticket, TicketContextType } from "@/types/ticket";
@@ -7,7 +6,8 @@ import {
   fetchTicketById, 
   createTicket, 
   updateTicketStatus,
-  subscribeToTicketUpdates
+  subscribeToTicketUpdates,
+  createReply
 } from "@/utils/ticketUtils";
 
 // Create the context
@@ -107,8 +107,32 @@ export const TicketProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     return unsubscribe;
   };
 
+  // Function to add a reply to a ticket
+  const addReply = async (ticketId: string, adminName: string, message: string): Promise<void> => {
+    try {
+      await createReply(ticketId, adminName, message);
+      
+      // No need to update local state as we'll get the update via the real-time subscription
+    } catch (error) {
+      console.error("Error adding reply:", error);
+      toast({
+        title: "Error sending reply",
+        description: "There was a problem sending your reply. Please try again.",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
   return (
-    <TicketContext.Provider value={{ tickets, addTicket, updateTicket, getTicketById, subscribeToTicket }}>
+    <TicketContext.Provider value={{ 
+      tickets, 
+      addTicket, 
+      updateTicket, 
+      getTicketById, 
+      subscribeToTicket,
+      addReply
+    }}>
       {children}
     </TicketContext.Provider>
   );

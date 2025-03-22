@@ -10,7 +10,7 @@ import TicketDetails from "@/components/ticket/TicketDetails";
 const TicketSubmitted: React.FC = () => {
   const [searchParams] = useSearchParams();
   const ticketId = searchParams.get("id");
-  const { ticket, loading, error, isUpdating } = useTicketData({ ticketId });
+  const { ticket, loading, error, isUpdating, replies, repliesLoading } = useTicketData({ ticketId });
 
   if (loading) {
     return <LoadingState />;
@@ -25,7 +25,12 @@ const TicketSubmitted: React.FC = () => {
       <div className="container px-4 sm:px-6 py-12">
         <div className="max-w-2xl mx-auto">
           <SuccessHeader />
-          <TicketDetails ticket={ticket} isUpdating={isUpdating} />
+          <TicketDetails 
+            ticket={ticket} 
+            isUpdating={isUpdating} 
+            replies={replies}
+            repliesLoading={repliesLoading}
+          />
         </div>
       </div>
     </div>

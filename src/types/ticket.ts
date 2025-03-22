@@ -9,6 +9,14 @@ export interface Ticket {
   created_at?: string;
 }
 
+export interface TicketReply {
+  id: string;
+  ticket_id: string;
+  admin_name: string;
+  message: string;
+  created_at: string;
+}
+
 export interface TicketStatusCounts {
   all: number;
   open: number;
@@ -22,4 +30,5 @@ export interface TicketContextType {
   updateTicket: (updatedTicket: Ticket) => void;
   getTicketById: (id: string) => Promise<Ticket | undefined>;
   subscribeToTicket: (id: string, callback: (ticket: Ticket) => void) => () => void;
+  addReply: (ticketId: string, adminName: string, message: string) => Promise<void>;
 }
