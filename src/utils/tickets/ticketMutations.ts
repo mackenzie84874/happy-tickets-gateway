@@ -66,6 +66,18 @@ export const updateTicketStatus = async (updatedTicket: Ticket): Promise<void> =
   // Log the status before update for debugging
   console.log(`Updating ticket ${updatedTicket.id} status to: ${validStatus}`);
   
+  // Verify actual table structure in database
+  const { data: tableStructure, error: tableError } = await supabase
+    .from('tickets')
+    .select('id, status')
+    .eq('id', updatedTicket.id)
+    .single();
+    
+  if (tableStructure) {
+    console.log("Current ticket state in database:", tableStructure);
+  }
+  
+  // Perform the update with explicit status conversion
   const { error, data } = await supabase
     .from('tickets')
     .update({
@@ -73,7 +85,7 @@ export const updateTicketStatus = async (updatedTicket: Ticket): Promise<void> =
       email: updatedTicket.email,
       subject: updatedTicket.subject,
       message: updatedTicket.message,
-      status: validStatus,
+      status: validStatus, // Ensure this is explicitly set as a string
       rating: updatedTicket.rating
     })
     .eq('id', updatedTicket.id)
@@ -84,5 +96,13 @@ export const updateTicketStatus = async (updatedTicket: Ticket): Promise<void> =
     throw error;
   }
   
+  // Verify the update worked
+  const { data: verifyUpdate } = await supabase
+    .from('tickets')
+    .select('id, status')
+    .eq('id', updatedTicket.id)
+    .single();
+    
   console.log(`Ticket ${updatedTicket.id} updated to status: ${validStatus}`, data);
+  console.log("Updated ticket verified in database:", verifyUpdate);
 };

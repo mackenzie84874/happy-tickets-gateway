@@ -5,6 +5,16 @@ import { Ticket } from "@/types/ticket";
 export const fetchTickets = async (): Promise<Ticket[]> => {
   console.log("Fetching all tickets from database");
   
+  // Check if table has the correct columns and data
+  const { data: tableInfo, error: tableError } = await supabase
+    .from('tickets')
+    .select('id, status')
+    .limit(5);
+    
+  if (tableInfo) {
+    console.log("Sample database ticket data:", tableInfo);
+  }
+  
   const { data, error } = await supabase
     .from('tickets')
     .select('*')
@@ -16,11 +26,19 @@ export const fetchTickets = async (): Promise<Ticket[]> => {
   }
 
   if (data) {
-    // Map the data and ensure status is properly converted
-    const formattedTickets = data.map(ticket => ({
-      ...ticket,
-      status: ticket.status as "open" | "inProgress" | "resolved" | "closed"
-    }));
+    // Convert string statuses to our expected types and log them
+    const formattedTickets = data.map(ticket => {
+      const validStatuses = ["open", "inProgress", "resolved", "closed"];
+      // Make sure the status is valid, defaulting to "open" if not
+      const validStatus = validStatuses.includes(ticket.status) 
+        ? ticket.status 
+        : "open";
+        
+      return {
+        ...ticket,
+        status: validStatus as "open" | "inProgress" | "resolved" | "closed"
+      };
+    });
     
     // Debug: Log all fetched tickets and their statuses
     console.log("Fetched tickets with statuses:", formattedTickets.map(t => ({
@@ -48,9 +66,15 @@ export const fetchTicketById = async (id: string): Promise<Ticket | undefined> =
   }
 
   if (data) {
+    const validStatuses = ["open", "inProgress", "resolved", "closed"];
+    // Make sure the status is valid, defaulting to "open" if not
+    const validStatus = validStatuses.includes(data.status) 
+      ? data.status 
+      : "open";
+      
     return {
       ...data,
-      status: data.status as "open" | "inProgress" | "resolved" | "closed"
+      status: validStatus as "open" | "inProgress" | "resolved" | "closed"
     };
   }
   

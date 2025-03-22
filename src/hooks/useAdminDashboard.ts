@@ -45,13 +45,20 @@ export const useAdminDashboard = () => {
     navigate("/admin");
   };
   
+  // Make sure we're handling each status correctly
   const filteredTickets = tickets
-    .filter(ticket => showResolved || (ticket.status !== "resolved" && ticket.status !== "closed")) // Only show non-resolved/non-closed tickets by default
+    .filter(ticket => {
+      if (!showResolved) {
+        return ticket.status !== "resolved" && ticket.status !== "closed";
+      }
+      return true;
+    })
     .filter(ticket => {
       if (filter === "all") return true;
       return ticket.status === filter;
     });
   
+  // Ensure we're counting statuses correctly
   const countByStatus: TicketStatusCounts = {
     all: tickets.filter(ticket => showResolved || (ticket.status !== "resolved" && ticket.status !== "closed")).length,
     open: tickets.filter(ticket => ticket.status === "open").length,
