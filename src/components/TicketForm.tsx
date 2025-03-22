@@ -46,7 +46,7 @@ const TicketForm: React.FC = () => {
         email: values.email,
         subject: values.subject,
         message: values.message,
-        status: "open" as "open" | "inProgress" | "resolved",
+        status: "open" as "open" | "inProgress" | "resolved" | "closed",
       };
       
       // Attempt to add the ticket and get the ID

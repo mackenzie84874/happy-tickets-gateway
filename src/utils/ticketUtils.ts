@@ -49,9 +49,17 @@ export const createTicket = async (ticketData: Omit<Ticket, "id" | "created_at">
   console.log("Creating ticket with data:", ticketData);
   
   try {
+    // For guest submissions, we need to use the .auth.anon key which should have appropriate permissions
+    // We also need to ensure the correct schema is used - explicitly adding all required columns
     const { data, error } = await supabase
       .from('tickets')
-      .insert([ticketData])
+      .insert([{
+        name: ticketData.name,
+        email: ticketData.email,
+        subject: ticketData.subject,
+        message: ticketData.message,
+        status: ticketData.status || 'open',
+      }])
       .select()
       .single();
 
