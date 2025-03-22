@@ -7,6 +7,7 @@ import TicketsList from "@/components/admin/TicketsList";
 import DashboardFooter from "@/components/admin/DashboardFooter";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { ClipboardList } from "lucide-react";
 
 const AdminDashboard: React.FC = () => {
   const {
@@ -21,23 +22,35 @@ const AdminDashboard: React.FC = () => {
   } = useAdminDashboard();
   
   if (!isAdmin) {
-    return <div>Checking admin status...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-secondary/30">
+        <div className="text-center animate-pulse">
+          <ClipboardList className="h-12 w-12 text-primary/50 mx-auto mb-4" />
+          <p className="text-lg font-medium">Checking admin status...</p>
+        </div>
+      </div>
+    );
   }
   
   return (
-    <div className="min-h-screen bg-secondary/30 pt-20">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50/30 to-white pt-20">
       <div className="container px-4 sm:px-6 py-8">
         <DashboardHeader handleLogout={handleLogout} />
         
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl font-bold">Help Desk Dashboard</h1>
-          <div className="flex items-center space-x-2">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <ClipboardList className="h-6 w-6 text-primary" />
+            Help Desk Dashboard
+          </h1>
+          <div className="flex items-center space-x-3 bg-white p-2 rounded-lg border shadow-sm">
             <Switch
               id="show-resolved"
               checked={showResolved}
               onCheckedChange={setShowResolved}
             />
-            <Label htmlFor="show-resolved">Show Resolved Tickets</Label>
+            <Label htmlFor="show-resolved" className="cursor-pointer">
+              Show Resolved Tickets
+            </Label>
           </div>
         </div>
         
@@ -46,10 +59,14 @@ const AdminDashboard: React.FC = () => {
           currentFilter={filter}
           onFilterChange={setFilter}
         />
-        <TicketsList 
-          tickets={filteredTickets} 
-          filterType={filter}
-        />
+        
+        <div className="mt-6 bg-white rounded-lg border shadow-sm overflow-hidden">
+          <TicketsList 
+            tickets={filteredTickets} 
+            filterType={filter}
+          />
+        </div>
+        
         <DashboardFooter />
       </div>
     </div>

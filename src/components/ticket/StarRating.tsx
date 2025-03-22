@@ -64,36 +64,38 @@ const StarRating: React.FC<StarRatingProps> = ({
   };
 
   return (
-    <div className="space-y-2">
-      <div className="text-sm font-medium">
+    <div className="space-y-3 bg-secondary/50 p-4 rounded-lg border">
+      <div className="text-sm font-medium text-center">
         {hasSubmitted 
           ? `Thank you for your ${rating}-star rating!` 
           : "How would you rate our support?"}
       </div>
       
-      <div className="flex items-center">
+      <div className="flex items-center justify-center gap-1">
         {[1, 2, 3, 4, 5].map((value) => (
           <Star
             key={value}
             className={cn(
-              "h-8 w-8 cursor-pointer transition-colors", 
+              "h-8 w-8 cursor-pointer transition-all duration-200", 
               (hoveredRating >= value || (!hoveredRating && rating >= value))
-                ? "text-yellow-400 fill-yellow-400" 
+                ? "text-yellow-400 fill-yellow-400 scale-110" 
                 : "text-gray-300",
-              hasSubmitted && "cursor-default"
+              hasSubmitted ? "cursor-default" : "hover:scale-125"
             )}
             onMouseEnter={() => !hasSubmitted && setHoveredRating(value)}
             onMouseLeave={() => !hasSubmitted && setHoveredRating(0)}
             onClick={() => !hasSubmitted && handleStarClick(value)}
           />
         ))}
-        
-        {isSubmitting && (
-          <span className="ml-2 text-sm text-primary animate-pulse">
+      </div>
+      
+      {isSubmitting && (
+        <div className="text-center">
+          <span className="text-sm text-primary animate-pulse">
             Submitting...
           </span>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
