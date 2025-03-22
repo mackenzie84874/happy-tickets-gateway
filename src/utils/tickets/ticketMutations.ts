@@ -62,27 +62,15 @@ export const updateTicketStatus = async (updatedTicket: Ticket): Promise<void> =
     // Log the status for debugging
     console.log("Updating ticket status to:", updatedTicket.status);
     
-    // Use RPC function to update the status - this converts the string to enum properly
-    const { error: rpcError } = await supabase.rpc('force_update_ticket_status', {
-      ticket_id: updatedTicket.id,
-      new_status: updatedTicket.status
-    });
+    // Direct update to avoid using RPC which might be causing issues
+    const { error } = await supabase
+      .from('tickets')
+      .update({ status: updatedTicket.status })
+      .eq('id', updatedTicket.id);
     
-    if (rpcError) {
-      console.error("Error in force_update_ticket_status:", rpcError);
-      
-      // Fallback to direct update if RPC fails
-      const { error } = await supabase
-        .from('tickets')
-        .update({
-          status: updatedTicket.status
-        })
-        .eq('id', updatedTicket.id);
-
-      if (error) {
-        console.error("Error updating ticket in Supabase:", error);
-        throw error;
-      }
+    if (error) {
+      console.error("Error updating ticket in Supabase:", error);
+      throw error;
     }
     
     // Verify the update was successful

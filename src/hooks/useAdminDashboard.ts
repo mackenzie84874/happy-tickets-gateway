@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTickets } from "@/hooks/useTicketContext";
 import { Ticket, TicketStatusCounts } from "@/types/ticket";
 import { fetchTickets } from "@/utils/tickets";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useAdminDashboard = () => {
   const navigate = useNavigate();
@@ -13,6 +15,21 @@ export const useAdminDashboard = () => {
   const [showResolved, setShowResolved] = useState(false); // Default to NOT showing resolved/closed tickets
   const [isLoading, setIsLoading] = useState(true);
   
+  // Use this callback to refresh tickets
+  const refreshTickets = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      console.log(`Refreshing tickets with filter: ${filter}`);
+      const freshTickets = await fetchTickets(filter === "all" ? undefined : filter);
+      console.log(`Refreshed ${freshTickets.length} tickets with filter ${filter}`);
+      setTickets(freshTickets);
+    } catch (error) {
+      console.error("Error refreshing tickets:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [filter]);
+  
   useEffect(() => {
     // Check if user is logged in as admin
     const adminStatus = localStorage.getItem("isAdmin");
@@ -22,52 +39,32 @@ export const useAdminDashboard = () => {
       setIsAdmin(true);
     }
     
-    // Fetch only open tickets on initial load
-    const fetchInitialTickets = async () => {
-      try {
-        setIsLoading(true);
-        const openTickets = await fetchTickets("open");
-        setTickets(openTickets);
-      } catch (error) {
-        console.error("Error fetching open tickets:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    // Initial data load
+    refreshTickets();
     
-    fetchInitialTickets();
-  }, [navigate]);
+    // Set up real-time subscription for ticket updates
+    const channel = supabase
+      .channel('tickets-changes')
+      .on('postgres_changes', {
+        event: '*', 
+        schema: 'public',
+        table: 'tickets'
+      }, (payload) => {
+        console.log('Real-time update received:', payload);
+        // Refresh tickets when any change happens
+        refreshTickets();
+      })
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [navigate, refreshTickets]);
   
   // Handle filter changes
   useEffect(() => {
-    const fetchFilteredTickets = async () => {
-      try {
-        setIsLoading(true);
-        if (filter === "all") {
-          // Fetch all tickets if "all" is selected and showResolved is true
-          // Otherwise fetch only open and inProgress tickets
-          if (showResolved) {
-            setTickets(allTickets);
-          } else {
-            const openInProgressTickets = allTickets.filter(
-              t => t.status === "open" || t.status === "inProgress"
-            );
-            setTickets(openInProgressTickets);
-          }
-        } else {
-          // Fetch tickets with specific status
-          const filteredTickets = await fetchTickets(filter);
-          setTickets(filteredTickets);
-        }
-      } catch (error) {
-        console.error(`Error fetching ${filter} tickets:`, error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchFilteredTickets();
-  }, [filter, showResolved, allTickets]);
+    refreshTickets();
+  }, [filter, refreshTickets]);
   
   // Debug - log all tickets and their statuses
   useEffect(() => {
@@ -109,16 +106,6 @@ export const useAdminDashboard = () => {
     countByStatus,
     handleLogout,
     isLoading,
-    refreshTickets: async () => {
-      setIsLoading(true);
-      try {
-        const freshTickets = await fetchTickets(filter === "all" ? undefined : filter);
-        setTickets(freshTickets);
-      } catch (error) {
-        console.error("Error refreshing tickets:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
+    refreshTickets
   };
 };

@@ -19,6 +19,7 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isReplyOpen, setIsReplyOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [currentStatus, setCurrentStatus] = useState<"open" | "inProgress" | "resolved" | "closed">(ticket.status);
   const { toast } = useToast();
   
   const handleStatusChange = async (newStatus: "open" | "inProgress" | "resolved" | "closed") => {
@@ -37,6 +38,9 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
     try {
       console.log(`Changing ticket ${ticket.id} status from ${ticket.status} to ${newStatus}`);
       
+      // Update local state immediately for responsive UI
+      setCurrentStatus(newStatus);
+      
       // Create a complete updatedTicket object
       const updatedTicket = {
         ...ticket,
@@ -53,6 +57,8 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
       });
     } catch (error) {
       console.error("Error updating ticket status:", error);
+      // Revert local state on error
+      setCurrentStatus(ticket.status);
       toast({
         title: "Error updating ticket",
         description: "Failed to update ticket status. Please try again.",
@@ -97,6 +103,12 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
     }
   };
   
+  // Use the current status state for rendering
+  const displayTicket = {
+    ...ticket,
+    status: currentStatus
+  };
+  
   return (
     <>
       <div 
@@ -112,18 +124,18 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
             className="cursor-pointer flex-grow"
           >
             <div className="flex items-center space-x-3 mb-2">
-              <TicketStatusBadge status={ticket.status} />
+              <TicketStatusBadge status={displayTicket.status} />
               <span className="text-xs text-muted-foreground">
-                {ticket.created_at && formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true })}
+                {displayTicket.created_at && formatDistanceToNow(new Date(displayTicket.created_at), { addSuffix: true })}
               </span>
             </div>
-            <h3 className="font-medium text-lg">{ticket.subject}</h3>
-            <p className="text-sm text-muted-foreground mt-1">From: {ticket.name} ({ticket.email})</p>
+            <h3 className="font-medium text-lg">{displayTicket.subject}</h3>
+            <p className="text-sm text-muted-foreground mt-1">From: {displayTicket.name} ({displayTicket.email})</p>
           </div>
           
           <div className="flex items-center space-x-2 mt-4 sm:mt-0">
             <TicketActionButtons 
-              ticket={ticket}
+              ticket={displayTicket}
               onAccept={handleAccept}
               onReply={handleReply}
               onClose={handleCloseTicket}
@@ -145,11 +157,11 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
         {isExpanded && (
           <div className="px-5 pb-5 animate-slide-down">
             <div className="text-sm border-t pt-4 pb-3 whitespace-pre-wrap">
-              {ticket.message}
+              {displayTicket.message}
             </div>
             
             <TicketStatusButtons 
-              ticket={ticket}
+              ticket={displayTicket}
               onStatusChange={handleStatusChange}
             />
           </div>
@@ -157,7 +169,7 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
       </div>
       
       <TicketReplyDialog 
-        ticket={ticket} 
+        ticket={displayTicket} 
         isOpen={isReplyOpen} 
         onClose={() => setIsReplyOpen(false)} 
       />
