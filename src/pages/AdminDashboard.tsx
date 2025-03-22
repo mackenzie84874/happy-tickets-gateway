@@ -18,7 +18,8 @@ const AdminDashboard: React.FC = () => {
     setShowResolved,
     filteredTickets,
     countByStatus,
-    handleLogout
+    handleLogout,
+    isLoading
   } = useAdminDashboard();
   
   if (!isAdmin) {
@@ -64,6 +65,7 @@ const AdminDashboard: React.FC = () => {
           <TicketsList 
             tickets={filteredTickets} 
             filterType={filter}
+            isLoading={isLoading}
           />
         </div>
         
