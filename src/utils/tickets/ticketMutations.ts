@@ -38,6 +38,11 @@ export const createTicket = async (ticketData: Omit<Ticket, "id" | "created_at">
 };
 
 export const updateTicketStatus = async (updatedTicket: Ticket): Promise<void> => {
+  console.log("updateTicketStatus called with ticket:", {
+    id: updatedTicket.id,
+    status: updatedTicket.status
+  });
+  
   // If ticket is closed, it cannot be changed to any other status
   if (updatedTicket.id) {
     const { data: existingTicket } = await supabase
@@ -53,14 +58,15 @@ export const updateTicketStatus = async (updatedTicket: Ticket): Promise<void> =
   }
   
   // Only accept valid statuses
-  const validStatus = ["open", "inProgress", "resolved", "closed"].includes(updatedTicket.status) 
+  const validStatuses = ["open", "inProgress", "resolved", "closed"];
+  const validStatus = validStatuses.includes(updatedTicket.status) 
     ? updatedTicket.status
     : "open";
     
   // Log the status before update for debugging
   console.log(`Updating ticket ${updatedTicket.id} status to: ${validStatus}`);
   
-  const { error } = await supabase
+  const { error, data } = await supabase
     .from('tickets')
     .update({
       name: updatedTicket.name,
@@ -70,12 +76,13 @@ export const updateTicketStatus = async (updatedTicket: Ticket): Promise<void> =
       status: validStatus,
       rating: updatedTicket.rating
     })
-    .eq('id', updatedTicket.id);
+    .eq('id', updatedTicket.id)
+    .select();
 
   if (error) {
     console.error("Error updating ticket in Supabase:", error);
     throw error;
   }
   
-  console.log(`Ticket ${updatedTicket.id} updated to status: ${validStatus}`);
+  console.log(`Ticket ${updatedTicket.id} updated to status: ${validStatus}`, data);
 };

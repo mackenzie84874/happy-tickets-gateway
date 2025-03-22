@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Ticket } from "@/types/ticket";
 
 export const fetchTickets = async (): Promise<Ticket[]> => {
+  console.log("Fetching all tickets from database");
+  
   const { data, error } = await supabase
     .from('tickets')
     .select('*')
@@ -14,10 +16,20 @@ export const fetchTickets = async (): Promise<Ticket[]> => {
   }
 
   if (data) {
-    return data.map(ticket => ({
+    // Map the data and ensure status is properly converted
+    const formattedTickets = data.map(ticket => ({
       ...ticket,
       status: ticket.status as "open" | "inProgress" | "resolved" | "closed"
     }));
+    
+    // Debug: Log all fetched tickets and their statuses
+    console.log("Fetched tickets with statuses:", formattedTickets.map(t => ({
+      id: t.id,
+      subject: t.subject,
+      status: t.status
+    })));
+    
+    return formattedTickets;
   }
   
   return [];
