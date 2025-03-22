@@ -9,6 +9,27 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_credentials: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       ticket_replies: {
         Row: {
           admin_name: string
@@ -123,6 +144,12 @@ export type Database = {
           new_status: string
         }
         Returns: undefined
+      }
+      is_admin: {
+        Args: {
+          user_email: string
+        }
+        Returns: boolean
       }
     }
     Enums: {

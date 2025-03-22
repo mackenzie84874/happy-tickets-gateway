@@ -27,6 +27,23 @@ const AdminLogin: React.FC = () => {
     setIsLoading(true);
     
     try {
+      // First check if email exists in admin_credentials table
+      const { data: adminData, error: adminError } = await supabase
+        .from('admin_credentials')
+        .select('email')
+        .eq('email', email)
+        .single();
+      
+      if (adminError) {
+        console.error("Admin check error:", adminError);
+        throw new Error("Not authorized as admin");
+      }
+      
+      if (!adminData) {
+        throw new Error("Not authorized as admin");
+      }
+      
+      // If the email is in the admin table, proceed with authentication
       const { data, error: loginError } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -130,7 +147,7 @@ const AdminLogin: React.FC = () => {
               </form>
               
               <div className="mt-6 text-center text-sm text-muted-foreground">
-                <p>Use the Supabase registered email and password</p>
+                <p>Admin access is restricted to authorized emails only</p>
               </div>
             </div>
           </div>
