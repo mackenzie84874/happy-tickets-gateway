@@ -2,7 +2,7 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 
-type TicketStatus = "open" | "inProgress" | "resolved";
+type TicketStatus = "open" | "inProgress" | "resolved" | "closed";
 
 interface TicketStatusBadgeProps {
   status: TicketStatus;
@@ -16,6 +16,8 @@ const TicketStatusBadge: React.FC<TicketStatusBadgeProps> = ({ status }) => {
       return <Badge className="bg-yellow-500 hover:bg-yellow-600">In Progress</Badge>;
     case "resolved":
       return <Badge className="bg-green-500 hover:bg-green-600">Resolved</Badge>;
+    case "closed":
+      return <Badge className="bg-gray-500 hover:bg-gray-600">Closed</Badge>;
     default:
       return <Badge>{status}</Badge>;
   }

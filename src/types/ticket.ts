@@ -5,7 +5,7 @@ export interface Ticket {
   email: string;
   subject: string;
   message: string;
-  status: "open" | "inProgress" | "resolved";
+  status: "open" | "inProgress" | "resolved" | "closed";
   created_at?: string;
 }
 
@@ -22,6 +22,7 @@ export interface TicketStatusCounts {
   open: number;
   inProgress: number;
   resolved: number;
+  closed: number;
 }
 
 export interface TicketContextType {

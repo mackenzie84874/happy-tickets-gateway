@@ -5,7 +5,7 @@ import TicketCard from "@/components/TicketCard";
 
 interface TicketsListProps {
   tickets: Ticket[];
-  filterType: "all" | "open" | "inProgress" | "resolved";
+  filterType: "all" | "open" | "inProgress" | "resolved" | "closed";
 }
 
 const TicketsList: React.FC<TicketsListProps> = ({ tickets, filterType }) => {
@@ -15,6 +15,7 @@ const TicketsList: React.FC<TicketsListProps> = ({ tickets, filterType }) => {
       case "open": return "Open Tickets";
       case "inProgress": return "In Progress Tickets";
       case "resolved": return "Resolved Tickets";
+      case "closed": return "Closed Tickets";
     }
   };
 
