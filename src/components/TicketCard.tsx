@@ -4,10 +4,11 @@ import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTickets } from "@/hooks/useTicketContext";
 import { Ticket } from "@/types/ticket";
-import { Button } from "@/components/ui/button";
-import { MessageCircle, CheckCircle, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import TicketReplyDialog from "@/components/admin/TicketReplyDialog";
+import TicketStatusBadge from "@/components/ticket/TicketStatusBadge";
+import TicketActionButtons from "@/components/ticket/TicketActionButtons";
+import TicketStatusButtons from "@/components/ticket/TicketStatusButtons";
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -18,13 +19,6 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isReplyOpen, setIsReplyOpen] = useState(false);
   const { toast } = useToast();
-  
-  const statusColors = {
-    open: "bg-blue-50 text-blue-700 border-blue-200",
-    inProgress: "bg-yellow-50 text-yellow-700 border-yellow-200",
-    resolved: "bg-green-50 text-green-700 border-green-200",
-    closed: "bg-gray-50 text-gray-700 border-gray-200"
-  };
   
   const handleStatusChange = async (newStatus: "open" | "inProgress" | "resolved" | "closed") => {
     // If ticket is already closed, don't allow status changes
@@ -103,14 +97,7 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
             className="cursor-pointer flex-grow"
           >
             <div className="flex items-center space-x-3 mb-2">
-              <span 
-                className={cn(
-                  "px-2.5 py-0.5 rounded-full text-xs font-medium border",
-                  statusColors[ticket.status as keyof typeof statusColors]
-                )}
-              >
-                {ticket.status === "inProgress" ? "In Progress" : ticket.status}
-              </span>
+              <TicketStatusBadge status={ticket.status} />
               <span className="text-xs text-muted-foreground">
                 {ticket.created_at && formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true })}
               </span>
@@ -120,37 +107,12 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
           </div>
           
           <div className="flex items-center space-x-2 mt-4 sm:mt-0">
-            {ticket.status !== "resolved" && ticket.status !== "closed" && (
-              <>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleAccept}
-                  disabled={ticket.status === "inProgress"}
-                  className={ticket.status === "inProgress" ? "bg-yellow-50" : ""}
-                >
-                  <CheckCircle className="mr-1 h-4 w-4" />
-                  {ticket.status === "inProgress" ? "Accepted" : "Accept"}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleReply}
-                >
-                  <MessageCircle className="mr-1 h-4 w-4" />
-                  Reply
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleCloseTicket}
-                  className="border-gray-300 text-gray-700 hover:bg-gray-100"
-                >
-                  <Lock className="mr-1 h-4 w-4" />
-                  Close
-                </Button>
-              </>
-            )}
+            <TicketActionButtons 
+              ticket={ticket}
+              onAccept={handleAccept}
+              onReply={handleReply}
+              onClose={handleCloseTicket}
+            />
             <div 
               className={cn(
                 "cursor-pointer transform transition-transform duration-300 ml-2", 
@@ -171,50 +133,10 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
               {ticket.message}
             </div>
             
-            <div className="flex items-center space-x-2 pt-2">
-              {/* Don't show status change buttons if ticket is closed */}
-              {ticket.status !== "closed" && (
-                <>
-                  <button
-                    onClick={() => handleStatusChange("open")}
-                    className={cn(
-                      "px-3 py-1 text-xs rounded-full border transition-colors",
-                      ticket.status === "open" ? "bg-blue-100 text-blue-800 border-blue-200" : "bg-white text-muted-foreground border-input hover:bg-blue-50"
-                    )}
-                  >
-                    Open
-                  </button>
-                  <button
-                    onClick={() => handleStatusChange("inProgress")}
-                    className={cn(
-                      "px-3 py-1 text-xs rounded-full border transition-colors",
-                      ticket.status === "inProgress" ? "bg-yellow-100 text-yellow-800 border-yellow-200" : "bg-white text-muted-foreground border-input hover:bg-yellow-50"
-                    )}
-                  >
-                    In Progress
-                  </button>
-                  <button
-                    onClick={() => handleStatusChange("resolved")}
-                    className={cn(
-                      "px-3 py-1 text-xs rounded-full border transition-colors",
-                      ticket.status === "resolved" ? "bg-green-100 text-green-800 border-green-200" : "bg-white text-muted-foreground border-input hover:bg-green-50"
-                    )}
-                  >
-                    Resolved
-                  </button>
-                </>
-              )}
-              <button
-                onClick={() => handleStatusChange("closed")}
-                className={cn(
-                  "px-3 py-1 text-xs rounded-full border transition-colors",
-                  ticket.status === "closed" ? "bg-gray-100 text-gray-800 border-gray-200" : "bg-white text-muted-foreground border-input hover:bg-gray-50"
-                )}
-                disabled={ticket.status === "closed"}
-              >
-                Close
-              </button>
-            </div>
+            <TicketStatusButtons 
+              ticket={ticket}
+              onStatusChange={handleStatusChange}
+            />
           </div>
         )}
       </div>
