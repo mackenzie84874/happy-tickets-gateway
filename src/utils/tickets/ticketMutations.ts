@@ -57,11 +57,11 @@ export const updateTicketStatus = async (updatedTicket: Ticket): Promise<void> =
     }
   }
   
-  // The critical issue: we need to correctly update the status in the database
+  // The critical issue: correctly update the status in the database
   console.log(`Updating ticket ${updatedTicket.id} status to: ${updatedTicket.status}`);
   
   try {
-    // Use UPSERT to ensure the update works regardless of DB structure
+    // First attempt - use standard update
     const { error } = await supabase
       .from('tickets')
       .update({
@@ -79,7 +79,7 @@ export const updateTicketStatus = async (updatedTicket: Ticket): Promise<void> =
       throw error;
     }
     
-    // Verify the update worked
+    // Verify the update was successful by checking the current database state
     const { data: verifyUpdate } = await supabase
       .from('tickets')
       .select('id, status')
@@ -89,11 +89,11 @@ export const updateTicketStatus = async (updatedTicket: Ticket): Promise<void> =
     console.log(`Ticket ${updatedTicket.id} updated to status: ${updatedTicket.status}`);
     console.log("Updated ticket verified in database:", verifyUpdate);
     
-    // If verification shows status didn't update, try a direct approach
+    // If verification shows status didn't update correctly, use the force_update function
     if (verifyUpdate && verifyUpdate.status !== updatedTicket.status) {
-      console.log("Status didn't update correctly. Trying again with direct SQL execution.");
+      console.log("Status didn't update correctly. Using direct SQL function.");
       
-      // Use RPC call to force the update if needed
+      // Use RPC call to force the update
       const { error: rpcError } = await supabase.rpc('force_update_ticket_status', {
         ticket_id: updatedTicket.id,
         new_status: updatedTicket.status
@@ -101,6 +101,7 @@ export const updateTicketStatus = async (updatedTicket: Ticket): Promise<void> =
       
       if (rpcError) {
         console.error("Error in force update:", rpcError);
+        throw rpcError;
       } else {
         console.log("Force update executed successfully");
       }

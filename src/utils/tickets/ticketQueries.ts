@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Ticket } from "@/types/ticket";
 
@@ -14,6 +15,7 @@ export const fetchTickets = async (): Promise<Ticket[]> => {
     console.log("Sample database ticket data:", tableInfo);
   }
   
+  // Fetch all tickets with explicit ordering
   const { data, error } = await supabase
     .from('tickets')
     .select('*')
@@ -25,7 +27,7 @@ export const fetchTickets = async (): Promise<Ticket[]> => {
   }
 
   if (data) {
-    // Process the tickets without modifying their status
+    // Process the tickets preserving their exact database status
     const tickets = data.map(ticket => ({
       ...ticket,
       // Keep the status exactly as it comes from the database
