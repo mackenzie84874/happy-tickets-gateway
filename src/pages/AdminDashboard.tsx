@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React from "react";
 import { useAdminDashboard } from "@/hooks/useAdminDashboard";
 import DashboardHeader from "@/components/admin/DashboardHeader";
 import StatusFilterCards from "@/components/admin/StatusFilterCards";
@@ -7,8 +7,7 @@ import TicketsList from "@/components/admin/TicketsList";
 import DashboardFooter from "@/components/admin/DashboardFooter";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { ClipboardList, RefreshCw } from "lucide-react";
+import { ClipboardList } from "lucide-react";
 
 const AdminDashboard: React.FC = () => {
   const {
@@ -19,26 +18,8 @@ const AdminDashboard: React.FC = () => {
     setShowResolved,
     filteredTickets,
     countByStatus,
-    handleLogout,
-    isLoading,
-    refreshTickets
+    handleLogout
   } = useAdminDashboard();
-  
-  // Effect to log the filtered tickets whenever they change
-  useEffect(() => {
-    if (filteredTickets.length > 0) {
-      console.log("Currently displayed tickets:", filteredTickets.map(t => ({
-        id: t.id,
-        subject: t.subject,
-        status: t.status
-      })));
-    }
-  }, [filteredTickets]);
-  
-  // Force refresh tickets on mount
-  useEffect(() => {
-    refreshTickets();
-  }, [refreshTickets]);
   
   if (!isAdmin) {
     return (
@@ -61,29 +42,15 @@ const AdminDashboard: React.FC = () => {
             <ClipboardList className="h-6 w-6 text-primary" />
             Help Desk Dashboard
           </h1>
-          
-          <div className="flex flex-wrap items-center gap-4">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={refreshTickets}
-              className="flex items-center gap-2"
-              disabled={isLoading}
-            >
-              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-            
-            <div className="flex items-center space-x-3 bg-white p-2 rounded-lg border shadow-sm">
-              <Switch
-                id="show-resolved"
-                checked={showResolved}
-                onCheckedChange={setShowResolved}
-              />
-              <Label htmlFor="show-resolved" className="cursor-pointer">
-                Show Resolved/Closed Tickets
-              </Label>
-            </div>
+          <div className="flex items-center space-x-3 bg-white p-2 rounded-lg border shadow-sm">
+            <Switch
+              id="show-resolved"
+              checked={showResolved}
+              onCheckedChange={setShowResolved}
+            />
+            <Label htmlFor="show-resolved" className="cursor-pointer">
+              Show Resolved Tickets
+            </Label>
           </div>
         </div>
         
@@ -97,7 +64,6 @@ const AdminDashboard: React.FC = () => {
           <TicketsList 
             tickets={filteredTickets} 
             filterType={filter}
-            isLoading={isLoading}
           />
         </div>
         

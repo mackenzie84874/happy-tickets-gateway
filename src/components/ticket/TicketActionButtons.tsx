@@ -30,7 +30,6 @@ const TicketActionButtons: React.FC<TicketActionButtonsProps> = ({
         onClick={onAccept}
         disabled={ticket.status === "inProgress"}
         className={ticket.status === "inProgress" ? "bg-yellow-50" : ""}
-        data-status={ticket.status}
       >
         <CheckCircle className="mr-1 h-4 w-4" />
         {ticket.status === "inProgress" ? "Accepted" : "Accept"}

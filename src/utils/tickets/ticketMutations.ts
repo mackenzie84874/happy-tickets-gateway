@@ -38,12 +38,6 @@ export const createTicket = async (ticketData: Omit<Ticket, "id" | "created_at">
 };
 
 export const updateTicketStatus = async (updatedTicket: Ticket): Promise<void> => {
-  console.log("updateTicketStatus called with ticket:", {
-    id: updatedTicket.id,
-    status: updatedTicket.status,
-    current_time: new Date().toISOString()
-  });
-  
   // If ticket is closed, it cannot be changed to any other status
   if (updatedTicket.id) {
     const { data: existingTicket } = await supabase
@@ -58,31 +52,27 @@ export const updateTicketStatus = async (updatedTicket: Ticket): Promise<void> =
     }
   }
   
-  try {
-    // Log the status for debugging
-    console.log("Updating ticket status to:", updatedTicket.status);
+  // Only accept valid statuses
+  const validStatus = ["open", "inProgress", "resolved", "closed"].includes(updatedTicket.status) 
+    ? updatedTicket.status
+    : "open";
     
-    // Direct update to avoid using RPC which might be causing issues
-    const { error } = await supabase
-      .from('tickets')
-      .update({ status: updatedTicket.status })
-      .eq('id', updatedTicket.id);
-    
-    if (error) {
-      console.error("Error updating ticket in Supabase:", error);
-      throw error;
-    }
-    
-    // Verify the update was successful
-    const { data: verifyUpdate } = await supabase
-      .from('tickets')
-      .select('id, status')
-      .eq('id', updatedTicket.id)
-      .single();
-      
-    console.log(`Ticket ${updatedTicket.id} updated to status:`, verifyUpdate?.status);
-  } catch (err) {
-    console.error("Error updating ticket status:", err);
-    throw err;
+  const { error } = await supabase
+    .from('tickets')
+    .update({
+      name: updatedTicket.name,
+      email: updatedTicket.email,
+      subject: updatedTicket.subject,
+      message: updatedTicket.message,
+      status: validStatus,
+      rating: updatedTicket.rating
+    })
+    .eq('id', updatedTicket.id);
+
+  if (error) {
+    console.error("Error updating ticket in Supabase:", error);
+    throw error;
   }
+  
+  console.log(`Ticket ${updatedTicket.id} updated to status: ${validStatus}`);
 };

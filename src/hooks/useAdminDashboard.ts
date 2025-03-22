@@ -1,34 +1,15 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTickets } from "@/hooks/useTicketContext";
 import { Ticket, TicketStatusCounts } from "@/types/ticket";
-import { fetchTickets } from "@/utils/tickets";
-import { supabase } from "@/integrations/supabase/client";
 
 export const useAdminDashboard = () => {
   const navigate = useNavigate();
-  const { tickets: allTickets, updateTicket } = useTickets();
-  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const { tickets } = useTickets();
   const [isAdmin, setIsAdmin] = useState(false);
-  const [filter, setFilter] = useState<"all" | "open" | "inProgress" | "resolved" | "closed">("open"); // Default to "open" filter
-  const [showResolved, setShowResolved] = useState(false); // Default to NOT showing resolved/closed tickets
-  const [isLoading, setIsLoading] = useState(true);
-  
-  // Use this callback to refresh tickets
-  const refreshTickets = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      console.log(`Refreshing tickets with filter: ${filter}`);
-      const freshTickets = await fetchTickets(filter === "all" ? undefined : filter);
-      console.log(`Refreshed ${freshTickets.length} tickets with filter ${filter}`);
-      setTickets(freshTickets);
-    } catch (error) {
-      console.error("Error refreshing tickets:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [filter]);
+  const [filter, setFilter] = useState<"all" | "open" | "inProgress" | "resolved" | "closed">("all");
+  const [showResolved, setShowResolved] = useState(false);
   
   useEffect(() => {
     // Check if user is logged in as admin
@@ -38,62 +19,26 @@ export const useAdminDashboard = () => {
     } else {
       setIsAdmin(true);
     }
-    
-    // Initial data load
-    refreshTickets();
-    
-    // Set up real-time subscription for ticket updates
-    const channel = supabase
-      .channel('tickets-changes')
-      .on('postgres_changes', {
-        event: '*', 
-        schema: 'public',
-        table: 'tickets'
-      }, (payload) => {
-        console.log('Real-time update received:', payload);
-        // Refresh tickets when any change happens
-        refreshTickets();
-      })
-      .subscribe();
-    
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [navigate, refreshTickets]);
-  
-  // Handle filter changes
-  useEffect(() => {
-    refreshTickets();
-  }, [filter, refreshTickets]);
-  
-  // Debug - log all tickets and their statuses
-  useEffect(() => {
-    if (tickets.length > 0) {
-      console.log("Current tickets in admin dashboard:", tickets.map(t => ({
-        id: t.id,
-        subject: t.subject,
-        status: t.status
-      })));
-    }
-  }, [tickets]);
+  }, [navigate]);
   
   const handleLogout = () => {
     localStorage.removeItem("isAdmin");
     navigate("/admin");
   };
   
-  // Apply filters correctly for display
-  const filteredTickets = showResolved 
-    ? tickets 
-    : tickets.filter(ticket => ticket.status !== "resolved" && ticket.status !== "closed");
+  const filteredTickets = tickets
+    .filter(ticket => showResolved || (ticket.status !== "resolved" && ticket.status !== "closed")) // Only show non-resolved/non-closed tickets by default
+    .filter(ticket => {
+      if (filter === "all") return true;
+      return ticket.status === filter;
+    });
   
-  // Count tickets by status
   const countByStatus: TicketStatusCounts = {
-    all: allTickets.length,
-    open: allTickets.filter(ticket => ticket.status === "open").length,
-    inProgress: allTickets.filter(ticket => ticket.status === "inProgress").length,
-    resolved: allTickets.filter(ticket => ticket.status === "resolved").length,
-    closed: allTickets.filter(ticket => ticket.status === "closed").length,
+    all: tickets.filter(ticket => showResolved || (ticket.status !== "resolved" && ticket.status !== "closed")).length,
+    open: tickets.filter(ticket => ticket.status === "open").length,
+    inProgress: tickets.filter(ticket => ticket.status === "inProgress").length,
+    resolved: tickets.filter(ticket => ticket.status === "resolved").length,
+    closed: tickets.filter(ticket => ticket.status === "closed").length,
   };
 
   return {
@@ -104,8 +49,6 @@ export const useAdminDashboard = () => {
     setShowResolved,
     filteredTickets,
     countByStatus,
-    handleLogout,
-    isLoading,
-    refreshTickets
+    handleLogout
   };
 };

@@ -10,7 +10,6 @@ import {
   subscribeToTicketUpdates,
   createReply
 } from "@/utils/tickets";
-import { supabase } from "@/integrations/supabase/client";
 
 // Create the context
 export const TicketContext = createContext<TicketContextType | undefined>(undefined);
@@ -25,7 +24,6 @@ export const TicketProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const loadTickets = async () => {
       try {
         const data = await fetchTickets();
-        // Important: preserve the status values exactly as they come from the database
         setTickets(data);
       } catch (error) {
         console.error("Error fetching tickets:", error);
@@ -38,26 +36,6 @@ export const TicketProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     };
 
     loadTickets();
-    
-    // Set up real-time subscription for all ticket updates
-    const channel = supabase
-      .channel('public:tickets')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'tickets'
-      }, async (payload) => {
-        console.log('Received real-time update for tickets table:', payload);
-        
-        // Refresh the entire ticket list to ensure consistency
-        const freshTickets = await fetchTickets();
-        setTickets(freshTickets);
-      })
-      .subscribe();
-    
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, [toast]);
 
   const addTicket = async (ticketData: Omit<Ticket, "id" | "created_at">): Promise<string | undefined> => {
@@ -81,23 +59,13 @@ export const TicketProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const updateTicket = async (updatedTicket: Ticket): Promise<void> => {
     try {
-      console.log("TicketContext - Starting ticket update:", {
-        id: updatedTicket.id,
-        status: updatedTicket.status,
-        statusType: typeof updatedTicket.status
-      });
-      
-      // Make sure we're sending the exact status to the database
       await updateTicketStatus(updatedTicket);
       
-      // Update local state to reflect the change immediately
       setTickets(prevTickets =>
         prevTickets.map(ticket => 
           ticket.id === updatedTicket.id ? updatedTicket : ticket
         )
       );
-      
-      console.log("TicketContext - Local state updated");
     } catch (error) {
       console.error("Error updating ticket:", error);
       toast({
@@ -105,7 +73,6 @@ export const TicketProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         description: "There was a problem updating the ticket.",
         variant: "destructive"
       });
-      throw error; // Re-throw to allow component to handle the error
     }
   };
 

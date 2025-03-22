@@ -18,14 +18,6 @@ export interface TicketReply {
   created_at: string;
 }
 
-export interface TicketStatusLog {
-  id: string;
-  ticket_id: string;
-  old_status: "open" | "inProgress" | "resolved" | "closed";
-  new_status: "open" | "inProgress" | "resolved" | "closed";
-  created_at: string;
-}
-
 export interface TicketStatusCounts {
   all: number;
   open: number;

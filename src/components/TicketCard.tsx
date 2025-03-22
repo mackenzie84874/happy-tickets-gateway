@@ -18,8 +18,6 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
   const { updateTicket, addReply } = useTickets();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isReplyOpen, setIsReplyOpen] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [currentStatus, setCurrentStatus] = useState<"open" | "inProgress" | "resolved" | "closed">(ticket.status);
   const { toast } = useToast();
   
   const handleStatusChange = async (newStatus: "open" | "inProgress" | "resolved" | "closed") => {
@@ -33,39 +31,21 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
       return;
     }
     
-    setIsUpdating(true);
-    
     try {
-      console.log(`Changing ticket ${ticket.id} status from ${ticket.status} to ${newStatus}`);
-      
-      // Update local state immediately for responsive UI
-      setCurrentStatus(newStatus);
-      
-      // Create a complete updatedTicket object
-      const updatedTicket = {
-        ...ticket,
-        status: newStatus
-      };
-      
-      // Send the status update to the server
-      await updateTicket(updatedTicket);
+      await updateTicket({ ...ticket, status: newStatus });
       
       // Show success toast
       toast({
-        title: `Ticket ${newStatus === "inProgress" ? "accepted" : newStatus}`,
+        title: `Ticket ${newStatus === "inProgress" ? "accepted" : "updated"}`,
         description: `Ticket status changed to ${newStatus === "inProgress" ? "In Progress" : newStatus}`,
       });
     } catch (error) {
       console.error("Error updating ticket status:", error);
-      // Revert local state on error
-      setCurrentStatus(ticket.status);
       toast({
         title: "Error updating ticket",
         description: "Failed to update ticket status. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsUpdating(false);
     }
   };
   
@@ -103,19 +83,12 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
     }
   };
   
-  // Use the current status state for rendering
-  const displayTicket = {
-    ...ticket,
-    status: currentStatus
-  };
-  
   return (
     <>
       <div 
         className={cn(
           "border rounded-lg bg-card shadow-sm overflow-hidden transition-all duration-300",
-          isExpanded ? "transform scale-[1.01]" : "",
-          isUpdating ? "opacity-70" : ""
+          isExpanded ? "transform scale-[1.01]" : ""
         )}
       >
         <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between">
@@ -124,18 +97,18 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
             className="cursor-pointer flex-grow"
           >
             <div className="flex items-center space-x-3 mb-2">
-              <TicketStatusBadge status={displayTicket.status} />
+              <TicketStatusBadge status={ticket.status} />
               <span className="text-xs text-muted-foreground">
-                {displayTicket.created_at && formatDistanceToNow(new Date(displayTicket.created_at), { addSuffix: true })}
+                {ticket.created_at && formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true })}
               </span>
             </div>
-            <h3 className="font-medium text-lg">{displayTicket.subject}</h3>
-            <p className="text-sm text-muted-foreground mt-1">From: {displayTicket.name} ({displayTicket.email})</p>
+            <h3 className="font-medium text-lg">{ticket.subject}</h3>
+            <p className="text-sm text-muted-foreground mt-1">From: {ticket.name} ({ticket.email})</p>
           </div>
           
           <div className="flex items-center space-x-2 mt-4 sm:mt-0">
             <TicketActionButtons 
-              ticket={displayTicket}
+              ticket={ticket}
               onAccept={handleAccept}
               onReply={handleReply}
               onClose={handleCloseTicket}
@@ -157,11 +130,11 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
         {isExpanded && (
           <div className="px-5 pb-5 animate-slide-down">
             <div className="text-sm border-t pt-4 pb-3 whitespace-pre-wrap">
-              {displayTicket.message}
+              {ticket.message}
             </div>
             
             <TicketStatusButtons 
-              ticket={displayTicket}
+              ticket={ticket}
               onStatusChange={handleStatusChange}
             />
           </div>
@@ -169,7 +142,7 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
       </div>
       
       <TicketReplyDialog 
-        ticket={displayTicket} 
+        ticket={ticket} 
         isOpen={isReplyOpen} 
         onClose={() => setIsReplyOpen(false)} 
       />

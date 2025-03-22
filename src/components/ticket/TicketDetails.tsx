@@ -87,8 +87,7 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({
           </div>
         </div>
         
-        {/* Show rating option when ticket is resolved or closed */}
-        {(ticket.status === "resolved" || ticket.status === "closed") && (
+        {ticket.status === "closed" && (
           <div className="p-4 bg-gray-50 rounded-lg border">
             <StarRating ticketId={ticket.id} initialRating={ticket.rating} />
           </div>

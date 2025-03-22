@@ -2,19 +2,13 @@
 import React from "react";
 import { Ticket } from "@/types/ticket";
 import TicketCard from "@/components/TicketCard";
-import TicketSkeleton from "./TicketSkeleton";
 
 interface TicketsListProps {
   tickets: Ticket[];
   filterType: "all" | "open" | "inProgress" | "resolved" | "closed";
-  isLoading?: boolean;
 }
 
-const TicketsList: React.FC<TicketsListProps> = ({ 
-  tickets, 
-  filterType,
-  isLoading = false
-}) => {
+const TicketsList: React.FC<TicketsListProps> = ({ tickets, filterType }) => {
   const getFilterTitle = () => {
     switch (filterType) {
       case "all": return "All Tickets";
@@ -32,14 +26,7 @@ const TicketsList: React.FC<TicketsListProps> = ({
       </div>
       
       <div className="divide-y">
-        {isLoading ? (
-          // Show skeleton loading state when loading
-          Array.from({ length: 3 }).map((_, index) => (
-            <div key={`skeleton-${index}`} className="p-4">
-              <TicketSkeleton />
-            </div>
-          ))
-        ) : tickets.length > 0 ? (
+        {tickets.length > 0 ? (
           tickets.map((ticket: Ticket) => (
             <div key={ticket.id} className="p-4">
               <TicketCard ticket={ticket} />
