@@ -9,6 +9,13 @@ export interface Ticket {
   created_at?: string;
 }
 
+export interface TicketStatusCounts {
+  all: number;
+  open: number;
+  inProgress: number;
+  resolved: number;
+}
+
 export interface TicketContextType {
   tickets: Ticket[];
   addTicket: (ticket: Omit<Ticket, "id" | "created_at">) => Promise<string | undefined>;
