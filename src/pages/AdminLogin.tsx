@@ -3,6 +3,8 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { AlertCircle } from "lucide-react";
 
 const AdminLogin: React.FC = () => {
   const navigate = useNavigate();
@@ -31,6 +33,7 @@ const AdminLogin: React.FC = () => {
       });
       
       if (loginError) {
+        console.error("Login error details:", loginError);
         throw loginError;
       }
       
@@ -48,6 +51,12 @@ const AdminLogin: React.FC = () => {
     } catch (err: any) {
       console.error("Login error:", err);
       setError(err.message || "Invalid credentials. Please try again.");
+      
+      toast({
+        title: "Login failed",
+        description: err.message || "Please check your credentials and try again",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -105,22 +114,23 @@ const AdminLogin: React.FC = () => {
                 </div>
                 
                 {error && (
-                  <div className="text-destructive text-sm font-medium animate-slide-up">
+                  <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm flex items-center animate-slide-up">
+                    <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
                     {error}
                   </div>
                 )}
                 
-                <button
+                <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full py-3 px-8 rounded-lg bg-primary text-primary-foreground text-sm font-medium transition-all hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none"
+                  className="w-full py-3 px-8"
                 >
                   {isLoading ? "Logging in..." : "Log In"}
-                </button>
+                </Button>
               </form>
               
               <div className="mt-6 text-center text-sm text-muted-foreground">
-                <p>Use your Supabase account email and password</p>
+                <p>Use the Supabase registered email and password</p>
               </div>
             </div>
           </div>
