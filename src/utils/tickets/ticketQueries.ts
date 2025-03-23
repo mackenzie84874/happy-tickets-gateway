@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Ticket } from "@/types/ticket";
 
@@ -8,7 +7,7 @@ export const fetchTickets = async (): Promise<Ticket[]> => {
   // Check if table has the correct columns and data
   const { data: tableInfo, error: tableError } = await supabase
     .from('tickets')
-    .select('id, status')
+    .select('id, status, rating')
     .limit(5);
     
   if (tableInfo) {
@@ -31,14 +30,17 @@ export const fetchTickets = async (): Promise<Ticket[]> => {
     const tickets = data.map(ticket => ({
       ...ticket,
       // Keep the status exactly as it comes from the database
-      status: ticket.status as "open" | "inProgress" | "resolved" | "closed"
+      status: ticket.status as "open" | "inProgress" | "resolved" | "closed",
+      // Make sure to include the rating
+      rating: ticket.rating
     }));
     
     // Debug: Log all fetched tickets and their statuses
-    console.log("Fetched tickets with statuses:", tickets.map(t => ({
+    console.log("Fetched tickets with statuses and ratings:", tickets.map(t => ({
       id: t.id,
       subject: t.subject,
-      status: t.status
+      status: t.status,
+      rating: t.rating
     })));
     
     return tickets;
@@ -63,7 +65,9 @@ export const fetchTicketById = async (id: string): Promise<Ticket | undefined> =
     return {
       ...data,
       // Keep the status exactly as it comes from the database
-      status: data.status as "open" | "inProgress" | "resolved" | "closed"
+      status: data.status as "open" | "inProgress" | "resolved" | "closed",
+      // Make sure to include the rating
+      rating: data.rating
     };
   }
   

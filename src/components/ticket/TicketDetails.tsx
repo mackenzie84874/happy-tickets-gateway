@@ -89,6 +89,7 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({
         
         {ticket.status === "closed" && (
           <div className="p-4 bg-gray-50 rounded-lg border">
+            <h3 className="text-sm font-medium mb-2">Rate Our Support</h3>
             <StarRating ticketId={ticket.id} initialRating={ticket.rating} />
           </div>
         )}

@@ -3,6 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, CheckCircle, Lock } from "lucide-react";
 import { Ticket } from "@/types/ticket";
+import { useToast } from "@/hooks/use-toast";
 
 interface TicketActionButtonsProps {
   ticket: Ticket;
@@ -17,6 +18,21 @@ const TicketActionButtons: React.FC<TicketActionButtonsProps> = ({
   onReply,
   onClose
 }) => {
+  const { toast } = useToast();
+  
+  const handleClose = () => {
+    // Confirm before closing
+    if (window.confirm("Are you sure you want to close this ticket? This will prompt the customer to rate their experience.")) {
+      onClose();
+      
+      // Show toast to admin
+      toast({
+        title: "Ticket closed",
+        description: "The customer will be prompted to rate your support.",
+      });
+    }
+  };
+  
   // Only show action buttons if ticket is not resolved or closed
   if (ticket.status === "resolved" || ticket.status === "closed") {
     return null;
@@ -45,7 +61,7 @@ const TicketActionButtons: React.FC<TicketActionButtonsProps> = ({
       <Button 
         variant="outline" 
         size="sm" 
-        onClick={onClose}
+        onClick={handleClose}
         className="border-gray-300 text-gray-700 hover:bg-gray-100"
       >
         <Lock className="mr-1 h-4 w-4" />
