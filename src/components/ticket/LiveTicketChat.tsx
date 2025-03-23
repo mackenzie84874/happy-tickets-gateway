@@ -68,7 +68,7 @@ const LiveTicketChat: React.FC<LiveTicketChatProps> = ({
             const bubbleStyle = isSystem 
               ? "bg-secondary/30 text-secondary-foreground mx-auto" 
               : (isGuestView && isGuest) || (!isGuestView && !isGuest)
-                ? "bg-primary/10 text-primary-foreground" 
+                ? "bg-primary/10 text-foreground" 
                 : "bg-blue-50 border border-blue-100 text-blue-800";
             
             return (
