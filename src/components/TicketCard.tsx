@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -10,6 +9,7 @@ import TicketStatusBadge from "@/components/ticket/TicketStatusBadge";
 import TicketActionButtons from "@/components/ticket/TicketActionButtons";
 import TicketStatusButtons from "@/components/ticket/TicketStatusButtons";
 import { fetchReplies } from "@/utils/tickets";
+import { Button } from "@/components/ui/button";
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -29,7 +29,6 @@ const TicketCard: React.FC<TicketCardProps> = ({
   const [isLoadingReplies, setIsLoadingReplies] = useState(false);
   const { toast } = useToast();
   
-  // Fetch the last reply when card is expanded
   useEffect(() => {
     if (isExpanded && !lastReply) {
       const loadLastReply = async () => {
@@ -37,7 +36,6 @@ const TicketCard: React.FC<TicketCardProps> = ({
         try {
           const fetchedReplies = await fetchReplies(ticket.id);
           if (fetchedReplies.length > 0) {
-            // Get the most recent reply
             setLastReply(fetchedReplies[fetchedReplies.length - 1]);
           }
         } catch (error) {
@@ -52,7 +50,6 @@ const TicketCard: React.FC<TicketCardProps> = ({
   }, [isExpanded, ticket.id, lastReply]);
   
   const handleStatusChange = async (newStatus: "open" | "inProgress" | "resolved" | "closed") => {
-    // If ticket is already closed, don't allow status changes
     if (ticket.status === "closed") {
       toast({
         title: "Cannot update closed ticket",
@@ -65,7 +62,6 @@ const TicketCard: React.FC<TicketCardProps> = ({
     try {
       await updateTicket({ ...ticket, status: newStatus });
       
-      // Show success toast
       toast({
         title: `Ticket ${newStatus === "inProgress" ? "accepted" : "updated"}`,
         description: `Ticket status changed to ${newStatus === "inProgress" ? "In Progress" : newStatus}`,
@@ -94,10 +90,8 @@ const TicketCard: React.FC<TicketCardProps> = ({
   
   const handleCloseTicket = async () => {
     try {
-      // First change the status to closed
       await handleStatusChange("closed");
       
-      // Then send an automated thank you message
       await addReply(ticket.id, "System", "Thank you for using our support! Please rate us 1-5 stars.");
       
       toast({
@@ -225,7 +219,6 @@ const TicketCard: React.FC<TicketCardProps> = ({
               </div>
             )}
             
-            {/* Loading state for replies */}
             {isLoadingReplies && (
               <div className="flex justify-center py-3">
                 <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full"></div>
