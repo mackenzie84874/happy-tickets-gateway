@@ -9,7 +9,7 @@ import TicketReplyDialog from "@/components/admin/TicketReplyDialog";
 import TicketStatusBadge from "@/components/ticket/TicketStatusBadge";
 import TicketActionButtons from "@/components/ticket/TicketActionButtons";
 import TicketStatusButtons from "@/components/ticket/TicketStatusButtons";
-import { fetchReplies } from "@/utils/tickets/ticketReplies";
+import { fetchReplies } from "@/utils/tickets";
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -25,28 +25,31 @@ const TicketCard: React.FC<TicketCardProps> = ({
   const { updateTicket, addReply } = useTickets();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isReplyOpen, setIsReplyOpen] = useState(false);
-  const [replies, setReplies] = useState<TicketReply[]>([]);
+  const [lastReply, setLastReply] = useState<TicketReply | null>(null);
   const [isLoadingReplies, setIsLoadingReplies] = useState(false);
   const { toast } = useToast();
   
-  // Fetch replies when card is expanded
+  // Fetch the last reply when card is expanded
   useEffect(() => {
-    if (isExpanded && replies.length === 0) {
-      const loadReplies = async () => {
+    if (isExpanded && !lastReply) {
+      const loadLastReply = async () => {
         setIsLoadingReplies(true);
         try {
           const fetchedReplies = await fetchReplies(ticket.id);
-          setReplies(fetchedReplies);
+          if (fetchedReplies.length > 0) {
+            // Get the most recent reply
+            setLastReply(fetchedReplies[fetchedReplies.length - 1]);
+          }
         } catch (error) {
-          console.error("Failed to load replies:", error);
+          console.error("Failed to load last reply:", error);
         } finally {
           setIsLoadingReplies(false);
         }
       };
       
-      loadReplies();
+      loadLastReply();
     }
-  }, [isExpanded, ticket.id, replies.length]);
+  }, [isExpanded, ticket.id, lastReply]);
   
   const handleStatusChange = async (newStatus: "open" | "inProgress" | "resolved" | "closed") => {
     // If ticket is already closed, don't allow status changes
@@ -143,7 +146,16 @@ const TicketCard: React.FC<TicketCardProps> = ({
               </span>
             </div>
             <h3 className="font-medium text-lg">{ticket.subject}</h3>
-            <p className="text-sm text-muted-foreground mt-1">From: {ticket.name} ({ticket.email})</p>
+            
+            <div className="flex justify-between items-center">
+              <p className="text-sm text-muted-foreground mt-1">From: {ticket.name} ({ticket.email})</p>
+              
+              {!isExpanded && lastReply && (
+                <span className="text-xs bg-secondary/20 px-2 py-1 rounded-full">
+                  {lastReply.is_from_guest ? "Last message from customer" : "Last replied by support"}
+                </span>
+              )}
+            </div>
           </div>
           
           <div className="flex items-center space-x-2 mt-4 sm:mt-0">
@@ -173,37 +185,42 @@ const TicketCard: React.FC<TicketCardProps> = ({
               {ticket.message}
             </div>
             
-            {/* Display ticket replies */}
-            {replies.length > 0 && (
+            {lastReply && (
               <div className="mt-4 border-t pt-4">
-                <h4 className="text-sm font-medium mb-3">Conversation History</h4>
-                <div className="space-y-3">
-                  {replies.map((reply) => (
-                    <div 
-                      key={reply.id}
-                      className={`p-3 rounded-lg text-sm ${
-                        reply.is_from_guest 
-                          ? "bg-blue-50 border border-blue-100" 
-                          : reply.admin_name === "System"
-                            ? "bg-gray-50 border border-gray-100"
-                            : "bg-green-50 border border-green-100"
-                      }`}
-                    >
-                      <div className="flex justify-between items-start mb-1">
-                        <div className="font-medium">
-                          {reply.is_from_guest 
-                            ? "Guest" 
-                            : reply.admin_name === "System"
-                              ? "System"
-                              : reply.admin_name}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {new Date(reply.created_at).toLocaleString()}
-                        </div>
-                      </div>
-                      <div className="whitespace-pre-wrap">{reply.message}</div>
+                <div className="flex justify-between items-center mb-2">
+                  <h4 className="text-sm font-medium">Last Message</h4>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={handleReply}
+                    className="text-xs h-8"
+                  >
+                    View Full Chat
+                  </Button>
+                </div>
+                
+                <div 
+                  className={`p-3 rounded-lg text-sm ${
+                    lastReply.is_from_guest 
+                      ? "bg-blue-50 border border-blue-100" 
+                      : lastReply.admin_name === "System"
+                        ? "bg-secondary/30"
+                        : "bg-primary/10"
+                  }`}
+                >
+                  <div className="flex justify-between items-start mb-1">
+                    <div className="font-medium">
+                      {lastReply.is_from_guest 
+                        ? "Guest" 
+                        : lastReply.admin_name === "System"
+                          ? "System"
+                          : lastReply.admin_name}
                     </div>
-                  ))}
+                    <div className="text-xs text-muted-foreground">
+                      {formatDistanceToNow(new Date(lastReply.created_at), { addSuffix: true })}
+                    </div>
+                  </div>
+                  <div className="whitespace-pre-wrap">{lastReply.message}</div>
                 </div>
               </div>
             )}

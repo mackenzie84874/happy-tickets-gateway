@@ -1,11 +1,15 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useTickets } from "@/hooks/useTicketContext";
-import { Ticket } from "@/types/ticket";
+import { Ticket, TicketReply } from "@/types/ticket";
 import { useToast } from "@/hooks/use-toast";
+import { SendHorizonal } from "lucide-react";
+import LiveTicketChat from "@/components/ticket/LiveTicketChat";
+import { fetchReplies } from "@/utils/tickets/ticketReplies";
+import { subscribeToReplies } from "@/utils/tickets/realtimeSubscriptions";
 
 interface TicketReplyDialogProps {
   ticket: Ticket;
@@ -17,8 +21,47 @@ const TicketReplyDialog: React.FC<TicketReplyDialogProps> = ({ ticket, isOpen, o
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [replies, setReplies] = useState<TicketReply[]>([]);
+  const [isLoadingReplies, setIsLoadingReplies] = useState(true);
   const { addReply } = useTickets();
   const { toast } = useToast();
+
+  // Fetch replies when dialog is opened
+  useEffect(() => {
+    if (isOpen) {
+      const loadReplies = async () => {
+        setIsLoadingReplies(true);
+        try {
+          const fetchedReplies = await fetchReplies(ticket.id);
+          setReplies(fetchedReplies);
+        } catch (error) {
+          console.error("Failed to load replies:", error);
+        } finally {
+          setIsLoadingReplies(false);
+        }
+      };
+      
+      loadReplies();
+    }
+  }, [isOpen, ticket.id]);
+
+  // Subscribe to real-time updates for new replies
+  useEffect(() => {
+    if (isOpen) {
+      const unsubscribe = subscribeToReplies(ticket.id, (newReply) => {
+        setReplies((prev) => {
+          // Check if the reply already exists
+          const exists = prev.some((r) => r.id === newReply.id);
+          if (exists) return prev;
+          return [...prev, newReply];
+        });
+      });
+      
+      return () => {
+        unsubscribe();
+      };
+    }
+  }, [isOpen, ticket.id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,7 +89,6 @@ const TicketReplyDialog: React.FC<TicketReplyDialogProps> = ({ ticket, isOpen, o
       });
       
       setMessage("");
-      onClose();
     } catch (error: any) {
       console.error("Error sending reply:", error);
       setSubmitError(error?.message || "Unknown error");
@@ -62,47 +104,55 @@ const TicketReplyDialog: React.FC<TicketReplyDialogProps> = ({ ticket, isOpen, o
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Reply to ticket</DialogTitle>
+          <DialogTitle className="flex justify-between items-center">
+            <span>Chat with {ticket.name}</span>
+            <span className="text-sm font-normal text-muted-foreground">Ticket: {ticket.subject}</span>
+          </DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <div className="text-sm font-medium mb-1">Ticket: {ticket.subject}</div>
-            <div className="text-sm text-muted-foreground mb-4">From: {ticket.name}</div>
-            
+        <div className="flex-1 my-4 border rounded-md overflow-hidden">
+          <LiveTicketChat 
+            replies={replies} 
+            isLoading={isLoadingReplies}
+            adminName="Admin"
+          />
+        </div>
+        
+        <form onSubmit={handleSubmit} className="mt-auto">
+          <div className="flex items-end gap-2">
             <Textarea
-              placeholder="Type your reply here..."
+              placeholder="Type your message here..."
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              className="min-h-[120px]"
+              className="flex-1 min-h-[80px] max-h-[120px] resize-none"
               disabled={isSubmitting}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  if (message.trim()) {
+                    handleSubmit(e);
+                  }
+                }
+              }}
             />
             
-            {submitError && (
-              <div className="mt-2 p-2 text-sm text-red-600 bg-red-50 rounded border border-red-200">
-                Error: {submitError}
-              </div>
-            )}
-          </div>
-          
-          <DialogFooter>
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onClose}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
             <Button 
               type="submit"
+              size="icon"
+              className="mb-1"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Sending..." : "Send Reply"}
+              <SendHorizonal className={isSubmitting ? "animate-pulse" : ""} />
             </Button>
-          </DialogFooter>
+          </div>
+          
+          {submitError && (
+            <div className="mt-2 p-2 text-sm text-red-600 bg-red-50 rounded border border-red-200">
+              Error: {submitError}
+            </div>
+          )}
         </form>
       </DialogContent>
     </Dialog>
