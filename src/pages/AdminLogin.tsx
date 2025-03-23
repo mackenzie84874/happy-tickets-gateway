@@ -4,9 +4,10 @@ import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 
 const AdminLogin: React.FC = () => {
   const navigate = useNavigate();
@@ -16,11 +17,42 @@ const AdminLogin: React.FC = () => {
   const [error, setError] = useState("");
   const [adminCheckError, setAdminCheckError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isFirstLogin, setIsFirstLogin] = useState(false);
+  
+  const checkAdminEmail = async (normalizedEmail: string) => {
+    console.log("Checking if email exists in admin_credentials:", normalizedEmail);
+    
+    // First try exact match
+    const { data: adminData, error: adminError } = await supabase
+      .from('admin_credentials')
+      .select('email')
+      .eq('email', normalizedEmail)
+      .maybeSingle();
+    
+    if (adminData) {
+      return { isAdmin: true, adminEmail: adminData.email };
+    }
+    
+    // If not found with exact match, try case-insensitive search
+    const { data: adminDataCI, error: adminErrorCI } = await supabase
+      .from('admin_credentials')
+      .select('email')
+      .ilike('email', normalizedEmail);
+      
+    if (!adminErrorCI && adminDataCI && adminDataCI.length > 0) {
+      console.log("Found admin with case-insensitive search:", adminDataCI[0].email);
+      return { isAdmin: true, adminEmail: adminDataCI[0].email };
+    }
+    
+    // Not an admin
+    return { isAdmin: false, adminEmail: normalizedEmail };
+  };
   
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setAdminCheckError("");
+    setIsFirstLogin(false);
     
     // Simple validation
     if (!email || !password) {
@@ -28,43 +60,27 @@ const AdminLogin: React.FC = () => {
       return;
     }
     
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
-      // Normalize email to lowercase
+      // Normalize and check email
       let normalizedEmail = email.trim().toLowerCase();
       
-      // First check if email exists in admin_credentials table
-      console.log("Checking if email exists in admin_credentials:", normalizedEmail);
-      const { data: adminData, error: adminError } = await supabase
-        .from('admin_credentials')
-        .select('email')
-        .eq('email', normalizedEmail)
-        .single();
+      // Check if the email is registered as an admin
+      const { isAdmin, adminEmail } = await checkAdminEmail(normalizedEmail);
       
-      if (adminError) {
-        console.error("Admin check error:", adminError);
-        
-        // If not found, check with case-insensitive search
-        if (adminError.code === 'PGRST116') {
-          const { data: adminDataCI, error: adminErrorCI } = await supabase
-            .from('admin_credentials')
-            .select('email')
-            .ilike('email', normalizedEmail);
-            
-          if (adminErrorCI || !adminDataCI || adminDataCI.length === 0) {
-            setAdminCheckError("This email is not registered as an admin");
-            throw new Error("Not authorized as admin: Email not registered");
-          } else {
-            console.log("Found admin with case-insensitive search:", adminDataCI[0].email);
-            // Use the email with the correct casing from the database
-            normalizedEmail = adminDataCI[0].email;
-          }
-        } else {
-          setAdminCheckError(`Admin check error: ${adminError.message}`);
-          throw new Error(`Admin database error: ${adminError.message}`);
-        }
+      if (!isAdmin) {
+        setAdminCheckError("This email is not registered as an admin");
+        throw new Error("Not authorized as admin: Email not registered");
       }
+      
+      // Use the email with the correct casing from the database
+      normalizedEmail = adminEmail;
       
       console.log("Admin check passed, proceeding with authentication");
       
@@ -77,48 +93,14 @@ const AdminLogin: React.FC = () => {
       if (loginError) {
         console.error("Login error details:", loginError);
         
-        // Check if it's a "User doesn't exist" error, we should create the account
+        // Check if it's a first-time login scenario
         if (loginError.message.includes("Email not confirmed") || 
             loginError.message.includes("Invalid login credentials") ||
             loginError.message.includes("Invalid email or password")) {
           
-          console.log("User doesn't exist yet. Creating account...");
-          // First-time login: create user account
-          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-            email: normalizedEmail,
-            password
-          });
-          
-          if (signUpError) {
-            console.error("Sign up error:", signUpError);
-            throw new Error(`Failed to create account: ${signUpError.message}`);
-          }
-          
-          console.log("Account created successfully:", signUpData);
-          
-          // Now try to sign in with the newly created credentials
-          const { data: newSignInData, error: newSignInError } = await supabase.auth.signInWithPassword({
-            email: normalizedEmail,
-            password
-          });
-          
-          if (newSignInError) {
-            console.error("New sign in error:", newSignInError);
-            throw new Error(`Failed to log in with new account: ${newSignInError.message}`);
-          }
-          
-          if (newSignInData?.session) {
-            // Set admin session
-            localStorage.setItem("isAdmin", "true");
-            
-            toast({
-              title: "Account created and login successful",
-              description: "Welcome to the admin dashboard",
-            });
-            
-            navigate("/admin/dashboard");
-            return;
-          }
+          console.log("User doesn't exist yet. Marking as first login...");
+          setIsFirstLogin(true);
+          return;
         } else {
           throw loginError;
         }
@@ -151,6 +133,82 @@ const AdminLogin: React.FC = () => {
     }
   };
   
+  const handleCreateAccount = async () => {
+    setError("");
+    setIsLoading(true);
+    
+    try {
+      // Normalize and check email again
+      let normalizedEmail = email.trim().toLowerCase();
+      
+      // Double-check if the email is registered as an admin
+      const { isAdmin, adminEmail } = await checkAdminEmail(normalizedEmail);
+      
+      if (!isAdmin) {
+        setAdminCheckError("This email is not registered as an admin");
+        throw new Error("Not authorized as admin: Email not registered");
+      }
+      
+      // Use the email with the correct casing from the database
+      normalizedEmail = adminEmail;
+      
+      // Create user account
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email: normalizedEmail,
+        password
+      });
+      
+      if (signUpError) {
+        console.error("Sign up error:", signUpError);
+        throw new Error(`Failed to create account: ${signUpError.message}`);
+      }
+      
+      console.log("Account created successfully:", signUpData);
+      
+      // Now try to sign in with the newly created credentials
+      const { data: newSignInData, error: newSignInError } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password
+      });
+      
+      if (newSignInError) {
+        console.error("New sign in error:", newSignInError);
+        if (newSignInError.message.includes("Email not confirmed")) {
+          toast({
+            title: "Account created",
+            description: "Please check your email to confirm your account, then try logging in again.",
+          });
+          setIsFirstLogin(false);
+          return;
+        }
+        throw new Error(`Failed to log in with new account: ${newSignInError.message}`);
+      }
+      
+      if (newSignInData?.session) {
+        // Set admin session
+        localStorage.setItem("isAdmin", "true");
+        
+        toast({
+          title: "Account created and login successful",
+          description: "Welcome to the admin dashboard",
+        });
+        
+        navigate("/admin/dashboard");
+      }
+    } catch (err: any) {
+      console.error("Account creation error:", err);
+      setError(err.message || "Failed to create account. Please try again.");
+      
+      toast({
+        title: "Account creation failed",
+        description: err.message || "Please check your information and try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white pt-20 flex items-center justify-center">
       <div className="container px-4 sm:px-6 py-12">
@@ -175,6 +233,15 @@ const AdminLogin: React.FC = () => {
                 <Alert variant="destructive" className="mb-4">
                   <AlertCircle className="h-4 w-4 mr-2" />
                   <AlertDescription>{adminCheckError}</AlertDescription>
+                </Alert>
+              )}
+              
+              {isFirstLogin && (
+                <Alert className="mb-4 bg-blue-50 border-blue-200">
+                  <Info className="h-4 w-4 mr-2 text-blue-500" />
+                  <AlertDescription>
+                    First time logging in? Click "Create Account" below to set up your admin account.
+                  </AlertDescription>
                 </Alert>
               )}
               
@@ -221,12 +288,33 @@ const AdminLogin: React.FC = () => {
                   disabled={isLoading}
                   className="w-full py-3 px-8"
                 >
-                  {isLoading ? "Logging in..." : "Log In"}
+                  {isLoading ? "Processing..." : "Log In"}
                 </Button>
+                
+                {isFirstLogin && (
+                  <>
+                    <div className="relative my-2">
+                      <Separator />
+                      <span className="absolute left-1/2 top-1/2 -translate-y-1/2 -translate-x-1/2 bg-white px-2 text-xs text-muted-foreground">
+                        OR
+                      </span>
+                    </div>
+                    
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={isLoading}
+                      className="w-full"
+                      onClick={handleCreateAccount}
+                    >
+                      Create Account
+                    </Button>
+                  </>
+                )}
               </form>
               
               <div className="mt-6 text-center text-sm text-muted-foreground">
-                <p>Admin access is restricted to authorized emails only</p>
+                <p>Your email must be registered in the admin system to access the dashboard</p>
               </div>
             </div>
           </div>
