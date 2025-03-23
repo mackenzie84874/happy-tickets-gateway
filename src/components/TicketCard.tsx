@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTickets } from "@/hooks/useTicketContext";
@@ -9,13 +9,6 @@ import TicketReplyDialog from "@/components/admin/TicketReplyDialog";
 import TicketStatusBadge from "@/components/ticket/TicketStatusBadge";
 import TicketActionButtons from "@/components/ticket/TicketActionButtons";
 import TicketStatusButtons from "@/components/ticket/TicketStatusButtons";
-import StarRating from "@/components/ticket/StarRating";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -25,15 +18,7 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
   const { updateTicket, addReply } = useTickets();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isReplyOpen, setIsReplyOpen] = useState(false);
-  const [isRatingDialogOpen, setIsRatingDialogOpen] = useState(false);
   const { toast } = useToast();
-  
-  // Check if the ticket was just closed and should show rating
-  useEffect(() => {
-    if (ticket.status === "closed" && !ticket.rating) {
-      setIsRatingDialogOpen(true);
-    }
-  }, [ticket.status, ticket.rating]);
   
   const handleStatusChange = async (newStatus: "open" | "inProgress" | "resolved" | "closed") => {
     // If ticket is already closed, don't allow status changes
@@ -54,11 +39,6 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
         title: `Ticket ${newStatus === "inProgress" ? "accepted" : "updated"}`,
         description: `Ticket status changed to ${newStatus === "inProgress" ? "In Progress" : newStatus}`,
       });
-      
-      // If changing to closed status, show rating dialog
-      if (newStatus === "closed") {
-        setIsRatingDialogOpen(true);
-      }
     } catch (error) {
       console.error("Error updating ticket status:", error);
       toast({
@@ -100,20 +80,6 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
         description: "Failed to close the ticket. Please try again.",
         variant: "destructive",
       });
-    }
-  };
-  
-  const handleRatingSubmit = async (rating: number) => {
-    try {
-      await updateTicket({ ...ticket, rating });
-      setIsRatingDialogOpen(false);
-      
-      toast({
-        title: "Thank you for your feedback",
-        description: `You rated our support ${rating} ${rating === 1 ? 'star' : 'stars'}.`,
-      });
-    } catch (error) {
-      console.error("Error submitting rating:", error);
     }
   };
   
@@ -180,25 +146,6 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
         isOpen={isReplyOpen} 
         onClose={() => setIsReplyOpen(false)} 
       />
-      
-      {/* Rating Dialog */}
-      <Dialog open={isRatingDialogOpen} onOpenChange={setIsRatingDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>How would you rate our support?</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <StarRating 
-              ticketId={ticket.id} 
-              initialRating={ticket.rating} 
-              onRatingSubmit={handleRatingSubmit}
-            />
-            <p className="text-center text-sm text-muted-foreground mt-4">
-              Your feedback helps us improve our support services.
-            </p>
-          </div>
-        </DialogContent>
-      </Dialog>
     </>
   );
 };
