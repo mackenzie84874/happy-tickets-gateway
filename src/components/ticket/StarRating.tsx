@@ -23,6 +23,8 @@ const StarRating: React.FC<StarRatingProps> = ({
   const [hasSubmitted, setHasSubmitted] = useState<boolean>(initialRating > 0);
   const { toast } = useToast();
 
+  console.log("StarRating mounted with initialRating:", initialRating);
+
   const handleStarClick = async (value: number) => {
     if (hasSubmitted) return;
     
