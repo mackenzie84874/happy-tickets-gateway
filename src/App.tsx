@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster"
@@ -8,7 +9,7 @@ import AdminLogin from "@/pages/AdminLogin";
 import AdminDashboard from "@/pages/AdminDashboard";
 import NotFound from "@/pages/NotFound";
 import { TicketProvider } from "@/contexts/TicketContext";
-import { AnimatedTransition } from "@/components/AnimatedTransition";
+import AnimatedTransition from "@/components/AnimatedTransition";
 import MyTickets from "@/pages/MyTickets";
 
 function App() {
