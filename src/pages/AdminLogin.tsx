@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const AdminLogin: React.FC = () => {
   const navigate = useNavigate();
@@ -12,11 +13,13 @@ const AdminLogin: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [adminCheckError, setAdminCheckError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setAdminCheckError("");
     
     // Simple validation
     if (!email || !password) {
@@ -28,20 +31,26 @@ const AdminLogin: React.FC = () => {
     
     try {
       // First check if email exists in admin_credentials table
+      console.log("Checking if email exists in admin_credentials:", email);
       const { data: adminData, error: adminError } = await supabase
         .from('admin_credentials')
         .select('email')
-        .eq('email', email)
-        .single();
+        .eq('email', email.trim().toLowerCase());
       
       if (adminError) {
         console.error("Admin check error:", adminError);
-        throw new Error("Not authorized as admin");
+        setAdminCheckError(`Admin check error: ${adminError.message}`);
+        throw new Error(`Admin database error: ${adminError.message}`);
       }
       
-      if (!adminData) {
-        throw new Error("Not authorized as admin");
+      // Check if we got any results
+      if (!adminData || adminData.length === 0) {
+        console.error("Email not found in admin_credentials");
+        setAdminCheckError("This email is not registered as an admin");
+        throw new Error("Not authorized as admin: Email not registered");
       }
+      
+      console.log("Admin check passed, proceeding with authentication");
       
       // If the email is in the admin table, proceed with authentication
       const { data, error: loginError } = await supabase.auth.signInWithPassword({
@@ -67,7 +76,9 @@ const AdminLogin: React.FC = () => {
       }
     } catch (err: any) {
       console.error("Login error:", err);
-      setError(err.message || "Invalid credentials. Please try again.");
+      if (!adminCheckError) {
+        setError(err.message || "Invalid credentials. Please try again.");
+      }
       
       toast({
         title: "Login failed",
@@ -98,6 +109,13 @@ const AdminLogin: React.FC = () => {
                   Log in to access the ticket management dashboard
                 </p>
               </div>
+              
+              {adminCheckError && (
+                <Alert variant="destructive" className="mb-4">
+                  <AlertCircle className="h-4 w-4 mr-2" />
+                  <AlertDescription>{adminCheckError}</AlertDescription>
+                </Alert>
+              )}
               
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
