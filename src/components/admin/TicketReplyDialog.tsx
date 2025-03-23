@@ -14,7 +14,7 @@ import { subscribeToReplies } from "@/utils/tickets/realtimeSubscriptions";
 interface TicketReplyDialogProps {
   ticket: Ticket;
   isOpen: boolean;
-  onClose: () => void;
+  onClose: (replies?: TicketReply[]) => void;
 }
 
 const TicketReplyDialog: React.FC<TicketReplyDialogProps> = ({ ticket, isOpen, onClose }) => {
@@ -102,8 +102,13 @@ const TicketReplyDialog: React.FC<TicketReplyDialogProps> = ({ ticket, isOpen, o
     }
   };
 
+  const handleDialogClose = () => {
+    // Pass the current replies back to the parent component
+    onClose(replies);
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleDialogClose()}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex justify-between items-center">

@@ -28,6 +28,7 @@ export const useTicketData = ({ ticketId }: UseTicketDataParams): UseTicketDataR
   const [repliesLoading, setRepliesLoading] = useState(true);
   const { toast } = useToast();
   const subscriptionsActive = useRef<boolean>(false);
+  const localRepliesCache = useRef<TicketReply[]>([]);
 
   const handleTicketUpdate = useCallback((updatedTicket: Ticket) => {
     console.log('Handling ticket update:', updatedTicket);
@@ -60,15 +61,23 @@ export const useTicketData = ({ ticketId }: UseTicketDataParams): UseTicketDataR
   const handleNewReply = useCallback((newReply: TicketReply) => {
     console.log('Handling new reply:', newReply);
     
-    toast({
-      title: "New Reply",
-      description: `${newReply.admin_name} has replied to your ticket.`,
-    });
+    // Only show toast notification for admin replies, not for guest's own messages
+    if (!newReply.is_from_guest) {
+      toast({
+        title: "New Reply",
+        description: `${newReply.admin_name} has replied to your ticket.`,
+      });
+    }
     
     setReplies(prev => {
       const exists = prev.some(reply => reply.id === newReply.id);
       if (exists) return prev;
-      return [...prev, newReply];
+      
+      // Update our local cache as well for persistence
+      const updatedReplies = [...prev, newReply];
+      localRepliesCache.current = updatedReplies;
+      
+      return updatedReplies;
     });
     
     setIsUpdating(true);
@@ -115,9 +124,15 @@ export const useTicketData = ({ ticketId }: UseTicketDataParams): UseTicketDataR
         const ticketReplies = await fetchReplies(ticketId);
         console.log("Fetched replies:", ticketReplies);
         setReplies(ticketReplies);
+        
+        // Cache replies locally for persistence
+        localRepliesCache.current = ticketReplies;
       } catch (err) {
         console.error("Error fetching ticket replies:", err);
-        // Don't set an error, just show empty replies
+        // If we have cached replies, use them as fallback
+        if (localRepliesCache.current.length > 0) {
+          setReplies(localRepliesCache.current);
+        }
       } finally {
         setRepliesLoading(false);
       }

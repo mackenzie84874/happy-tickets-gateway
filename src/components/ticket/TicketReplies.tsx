@@ -62,7 +62,8 @@ const TicketReplies: React.FC<TicketRepliesProps> = ({
       
       <LiveTicketChat 
         replies={replies} 
-        isLoading={isLoading} 
+        isLoading={isLoading}
+        isGuestView={true} // This is in the guest view context
       />
       
       {renderRatingUI()}

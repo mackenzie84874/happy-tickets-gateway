@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTickets } from "@/hooks/useTicketContext";
@@ -28,15 +28,24 @@ const TicketCard: React.FC<TicketCardProps> = ({
   const [lastReply, setLastReply] = useState<TicketReply | null>(null);
   const [isLoadingReplies, setIsLoadingReplies] = useState(false);
   const { toast } = useToast();
+  const repliesCache = useRef<Record<string, TicketReply[]>>({});
   
   useEffect(() => {
     if (isExpanded && !lastReply) {
       const loadLastReply = async () => {
         setIsLoadingReplies(true);
         try {
+          if (repliesCache.current[ticket.id] && repliesCache.current[ticket.id].length > 0) {
+            const cachedReplies = repliesCache.current[ticket.id];
+            setLastReply(cachedReplies[cachedReplies.length - 1]);
+            setIsLoadingReplies(false);
+            return;
+          }
+          
           const fetchedReplies = await fetchReplies(ticket.id);
           if (fetchedReplies.length > 0) {
             setLastReply(fetchedReplies[fetchedReplies.length - 1]);
+            repliesCache.current[ticket.id] = fetchedReplies;
           }
         } catch (error) {
           console.error("Failed to load last reply:", error);
@@ -106,6 +115,14 @@ const TicketCard: React.FC<TicketCardProps> = ({
         variant: "destructive",
       });
     }
+  };
+  
+  const handleDialogClose = (newReplies?: TicketReply[]) => {
+    if (newReplies && newReplies.length > 0) {
+      repliesCache.current[ticket.id] = newReplies;
+      setLastReply(newReplies[newReplies.length - 1]);
+    }
+    setIsReplyOpen(false);
   };
   
   return (
@@ -236,7 +253,7 @@ const TicketCard: React.FC<TicketCardProps> = ({
       <TicketReplyDialog 
         ticket={ticket} 
         isOpen={isReplyOpen} 
-        onClose={() => setIsReplyOpen(false)} 
+        onClose={handleDialogClose} 
       />
     </>
   );

@@ -9,12 +9,14 @@ interface LiveTicketChatProps {
   replies: TicketReply[];
   isLoading: boolean;
   adminName?: string;
+  isGuestView?: boolean;
 }
 
 const LiveTicketChat: React.FC<LiveTicketChatProps> = ({ 
   replies, 
   isLoading,
-  adminName = "Admin"
+  adminName = "Admin",
+  isGuestView = false
 }) => {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   
@@ -54,22 +56,28 @@ const LiveTicketChat: React.FC<LiveTicketChatProps> = ({
             const displayName = isSystem 
               ? "System" 
               : isGuest 
-                ? reply.admin_name.replace("Guest (", "").replace(")", "") 
-                : reply.admin_name;
+                ? isGuestView ? "You" : reply.admin_name.replace("Guest (", "").replace(")", "") 
+                : isGuestView ? "Support" : reply.admin_name;
+            
+            // In guest view, align guest messages to right (sent) and admin messages to left (received)
+            const alignment = (isGuestView && isGuest) || (!isGuestView && !isGuest) 
+              ? "justify-end" 
+              : "justify-start";
+            
+            // Apply appropriate styling based on message type and view
+            const bubbleStyle = isSystem 
+              ? "bg-secondary/30 text-secondary-foreground mx-auto" 
+              : (isGuestView && isGuest) || (!isGuestView && !isGuest)
+                ? "bg-primary/10 text-primary-foreground" 
+                : "bg-blue-50 border border-blue-100 text-blue-800";
             
             return (
               <div 
                 key={reply.id}
-                className={`flex ${isGuest ? 'justify-start' : 'justify-end'}`}
+                className={`flex ${alignment}`}
               >
                 <div 
-                  className={`max-w-[80%] px-4 py-2 rounded-lg ${
-                    isSystem 
-                      ? "bg-secondary/30 text-secondary-foreground mx-auto" 
-                      : isGuest 
-                        ? "bg-blue-50 border border-blue-100 text-blue-800" 
-                        : "bg-primary/10 text-primary-foreground"
-                  }`}
+                  className={`max-w-[80%] px-4 py-2 rounded-lg ${bubbleStyle}`}
                 >
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-medium text-sm">{displayName}</span>
