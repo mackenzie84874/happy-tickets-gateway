@@ -4,6 +4,7 @@ import { Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 
 interface StarRatingProps {
   ticketId: string;
@@ -63,20 +64,31 @@ const StarRating: React.FC<StarRatingProps> = ({
     }
   };
 
+  const handleSubmit = () => {
+    if (rating > 0 && !hasSubmitted) {
+      handleStarClick(rating);
+    } else if (rating === 0) {
+      toast({
+        title: "Please select a rating",
+        description: "Click on a star to provide your rating.",
+      });
+    }
+  };
+
   return (
-    <div className="space-y-3 bg-secondary/50 p-4 rounded-lg border">
-      <div className="text-sm font-medium text-center">
+    <div className="space-y-6">
+      <div className="text-center">
         {hasSubmitted 
-          ? `Thank you for your ${rating}-star rating!` 
-          : "How would you rate our support?"}
+          ? <p className="text-green-600 font-medium">Thank you for your {rating}-star rating!</p> 
+          : <p className="text-gray-700">Please rate your support experience</p>}
       </div>
       
-      <div className="flex items-center justify-center gap-1">
+      <div className="flex items-center justify-center gap-2">
         {[1, 2, 3, 4, 5].map((value) => (
           <Star
             key={value}
             className={cn(
-              "h-8 w-8 cursor-pointer transition-all duration-200", 
+              "h-10 w-10 cursor-pointer transition-all duration-200", 
               (hoveredRating >= value || (!hoveredRating && rating >= value))
                 ? "text-yellow-400 fill-yellow-400 scale-110" 
                 : "text-gray-300",
@@ -89,11 +101,15 @@ const StarRating: React.FC<StarRatingProps> = ({
         ))}
       </div>
       
-      {isSubmitting && (
-        <div className="text-center">
-          <span className="text-sm text-primary animate-pulse">
-            Submitting...
-          </span>
+      {!hasSubmitted && (
+        <div className="flex justify-center">
+          <Button 
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="px-6"
+          >
+            {isSubmitting ? "Submitting..." : "Submit Rating"}
+          </Button>
         </div>
       )}
     </div>
