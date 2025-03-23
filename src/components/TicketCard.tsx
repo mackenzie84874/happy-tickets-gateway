@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -71,9 +72,20 @@ const TicketCard: React.FC<TicketCardProps> = ({
     try {
       await updateTicket({ ...ticket, status: newStatus });
       
+      let statusMessage;
+      if (newStatus === "inProgress") {
+        statusMessage = "Ticket accepted and is now in progress";
+      } else if (newStatus === "resolved") {
+        statusMessage = "Ticket marked as resolved";
+      } else if (newStatus === "closed") {
+        statusMessage = "Ticket closed";
+      } else {
+        statusMessage = `Ticket status changed to ${newStatus}`;
+      }
+      
       toast({
-        title: `Ticket ${newStatus === "inProgress" ? "accepted" : "updated"}`,
-        description: `Ticket status changed to ${newStatus === "inProgress" ? "In Progress" : newStatus}`,
+        title: `Ticket updated`,
+        description: statusMessage,
       });
     } catch (error) {
       console.error("Error updating ticket status:", error);
@@ -91,6 +103,21 @@ const TicketCard: React.FC<TicketCardProps> = ({
 
   const handleAccept = () => {
     handleStatusChange("inProgress");
+  };
+  
+  const handleResolve = async () => {
+    try {
+      await handleStatusChange("resolved");
+      
+      await addReply(ticket.id, "System", "This ticket has been marked as resolved. If you need further assistance, please submit a new ticket.");
+      
+      toast({
+        title: "Ticket resolved",
+        description: "The ticket has been marked as resolved and a notification was sent to the customer.",
+      });
+    } catch (error) {
+      console.error("Error resolving ticket:", error);
+    }
   };
   
   const handleReply = () => {
@@ -175,6 +202,7 @@ const TicketCard: React.FC<TicketCardProps> = ({
               onAccept={handleAccept}
               onReply={handleReply}
               onClose={handleCloseTicket}
+              onResolve={handleResolve}
             />
             <div 
               className={cn(
@@ -205,6 +233,7 @@ const TicketCard: React.FC<TicketCardProps> = ({
                     size="sm" 
                     onClick={handleReply}
                     className="text-xs h-8"
+                    disabled={ticket.status === "resolved" || ticket.status === "closed"}
                   >
                     View Full Chat
                   </Button>

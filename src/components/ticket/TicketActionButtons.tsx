@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, CheckCircle, Lock } from "lucide-react";
+import { MessageCircle, CheckCircle, Lock, CheckSquare } from "lucide-react";
 import { Ticket } from "@/types/ticket";
 import { useToast } from "@/hooks/use-toast";
 
@@ -10,13 +10,15 @@ interface TicketActionButtonsProps {
   onAccept: () => void;
   onReply: () => void;
   onClose: () => void;
+  onResolve: () => void;
 }
 
 const TicketActionButtons: React.FC<TicketActionButtonsProps> = ({
   ticket,
   onAccept,
   onReply,
-  onClose
+  onClose,
+  onResolve
 }) => {
   const { toast } = useToast();
   
@@ -33,31 +35,59 @@ const TicketActionButtons: React.FC<TicketActionButtonsProps> = ({
     }
   };
   
+  const handleResolve = () => {
+    if (window.confirm("Are you sure you want to mark this ticket as resolved? The customer will no longer be able to reply.")) {
+      onResolve();
+      
+      toast({
+        title: "Ticket resolved",
+        description: "The customer has been notified that their ticket is resolved.",
+      });
+    }
+  };
+  
   // Only show action buttons if ticket is not resolved or closed
-  if (ticket.status === "resolved" || ticket.status === "closed") {
+  if (ticket.status === "closed") {
     return null;
   }
 
   return (
     <div className="flex items-center space-x-2">
-      <Button 
-        variant="outline" 
-        size="sm" 
-        onClick={onAccept}
-        disabled={ticket.status === "inProgress"}
-        className={ticket.status === "inProgress" ? "bg-yellow-50" : ""}
-      >
-        <CheckCircle className="mr-1 h-4 w-4" />
-        {ticket.status === "inProgress" ? "Accepted" : "Accept"}
-      </Button>
-      <Button 
-        variant="outline" 
-        size="sm" 
-        onClick={onReply}
-      >
-        <MessageCircle className="mr-1 h-4 w-4" />
-        Reply
-      </Button>
+      {ticket.status !== "resolved" && (
+        <>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={onAccept}
+            disabled={ticket.status === "inProgress"}
+            className={ticket.status === "inProgress" ? "bg-yellow-50" : ""}
+          >
+            <CheckCircle className="mr-1 h-4 w-4" />
+            {ticket.status === "inProgress" ? "Accepted" : "Accept"}
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={onReply}
+          >
+            <MessageCircle className="mr-1 h-4 w-4" />
+            Reply
+          </Button>
+        </>
+      )}
+      
+      {ticket.status !== "resolved" && (
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleResolve}
+          className="border-green-300 text-green-700 hover:bg-green-100"
+        >
+          <CheckSquare className="mr-1 h-4 w-4" />
+          Resolve
+        </Button>
+      )}
+      
       <Button 
         variant="outline" 
         size="sm" 

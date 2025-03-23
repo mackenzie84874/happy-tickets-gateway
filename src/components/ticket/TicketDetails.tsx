@@ -3,13 +3,14 @@ import React from "react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { Ticket, TicketReply } from "@/types/ticket";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import TicketStatusBadge from "./TicketStatusBadge";
 import TicketStatusMessage from "./TicketStatusMessage";
 import TicketReplies from "./TicketReplies";
 import GuestReplyForm from "./GuestReplyForm";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface TicketDetailsProps {
   ticket: Ticket;
@@ -26,8 +27,32 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({
   repliesLoading,
   showInlineRating = false
 }) => {
-  // Don't show the reply form if the ticket is closed
-  const canReply = ticket.status !== "closed";
+  // Don't show the reply form if the ticket is closed or resolved
+  const canReply = ticket.status !== "closed" && ticket.status !== "resolved";
+
+  // Show appropriate alerts based on ticket status
+  const renderStatusAlert = () => {
+    if (ticket.status === "resolved") {
+      return (
+        <Alert className="mb-4 bg-green-50 text-green-800 border-green-200">
+          <AlertCircle className="h-4 w-4 text-green-600" />
+          <AlertDescription>
+            This ticket has been marked as resolved. If you need further assistance, please submit a new ticket.
+          </AlertDescription>
+        </Alert>
+      );
+    } else if (ticket.status === "closed") {
+      return (
+        <Alert className="mb-4 bg-gray-50 text-gray-800 border-gray-200">
+          <AlertCircle className="h-4 w-4 text-gray-600" />
+          <AlertDescription>
+            This ticket has been closed. Thank you for using our support system.
+          </AlertDescription>
+        </Alert>
+      );
+    }
+    return null;
+  };
 
   return (
     <Card className={`shadow-sm transition-all duration-300 ${isUpdating ? 'ring-2 ring-primary animate-pulse' : ''}`}>
@@ -52,6 +77,8 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({
       </CardHeader>
       
       <CardContent className="space-y-4">
+        {renderStatusAlert()}
+        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <h3 className="text-sm font-medium text-muted-foreground">Name</h3>
@@ -101,8 +128,23 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({
           showInlineRating={showInlineRating}
         />
         
-        {canReply && (
+        {canReply ? (
           <GuestReplyForm ticketId={ticket.id} guestName={ticket.name} />
+        ) : (
+          ticket.status === "resolved" && (
+            <div className="mt-6 border-t pt-4">
+              <Alert className="bg-blue-50 text-blue-800 border-blue-200">
+                <AlertDescription>
+                  If you still need assistance with this issue, please submit a new ticket.
+                </AlertDescription>
+              </Alert>
+              <div className="mt-4 flex justify-end">
+                <Link to="/submit-ticket">
+                  <Button>Submit New Ticket</Button>
+                </Link>
+              </div>
+            </div>
+          )
         )}
       </CardContent>
       
