@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Star } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 interface StarRatingProps {
@@ -29,12 +29,12 @@ const StarRating: React.FC<StarRatingProps> = ({
     setIsSubmitting(true);
 
     try {
-      // Save rating to Supabase with a type assertion to bypass TypeScript error
+      console.log(`Submitting rating ${value} for ticket ${ticketId}`);
+      
+      // Save rating to Supabase
       const { error } = await supabase
         .from('tickets')
-        .update({ 
-          rating: value 
-        } as any)
+        .update({ rating: value })
         .eq('id', ticketId);
 
       if (error) {
