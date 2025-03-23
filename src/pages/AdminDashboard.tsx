@@ -7,7 +7,7 @@ import TicketsList from "@/components/admin/TicketsList";
 import DashboardFooter from "@/components/admin/DashboardFooter";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { ClipboardList } from "lucide-react";
+import { ClipboardList, AlertTriangle } from "lucide-react";
 
 const AdminDashboard: React.FC = () => {
   const {
@@ -24,8 +24,9 @@ const AdminDashboard: React.FC = () => {
   
   // Effect to log the filtered tickets whenever they change
   useEffect(() => {
+    console.log("Currently displayed tickets:", filteredTickets.length);
     if (filteredTickets.length > 0) {
-      console.log("Currently displayed tickets:", filteredTickets.map(t => ({
+      console.log("Ticket details:", filteredTickets.map(t => ({
         id: t.id,
         subject: t.subject,
         status: t.status
@@ -54,14 +55,14 @@ const AdminDashboard: React.FC = () => {
             <ClipboardList className="h-6 w-6 text-primary" />
             Help Desk Dashboard
           </h1>
-          <div className="flex items-center space-x-3 bg-white p-2 rounded-lg border shadow-sm">
+          <div className="flex items-center space-x-3 bg-white p-3 rounded-lg border shadow-sm">
             <Switch
               id="show-resolved"
               checked={showResolved}
               onCheckedChange={setShowResolved}
             />
-            <Label htmlFor="show-resolved" className="cursor-pointer">
-              Show Resolved Tickets
+            <Label htmlFor="show-resolved" className="cursor-pointer font-medium">
+              Show Resolved & Closed Tickets
             </Label>
           </div>
         </div>
@@ -71,6 +72,15 @@ const AdminDashboard: React.FC = () => {
           currentFilter={filter}
           onFilterChange={setFilter}
         />
+        
+        {tickets.length === 0 && !isLoading && (
+          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-3">
+            <AlertTriangle className="h-5 w-5 text-yellow-500" />
+            <p className="text-sm text-yellow-700">
+              No tickets found in the system. When customers submit tickets, they will appear here.
+            </p>
+          </div>
+        )}
         
         <div className="mt-6 bg-white rounded-lg border shadow-sm overflow-hidden">
           <TicketsList 

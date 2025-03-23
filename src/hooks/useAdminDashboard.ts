@@ -8,8 +8,8 @@ export const useAdminDashboard = () => {
   const navigate = useNavigate();
   const { tickets } = useTickets();
   const [isAdmin, setIsAdmin] = useState(false);
-  const [filter, setFilter] = useState<"all" | "open" | "inProgress" | "resolved" | "closed">("open"); // Default to "open" filter
-  const [showResolved, setShowResolved] = useState(false);
+  const [filter, setFilter] = useState<"all" | "open" | "inProgress" | "resolved" | "closed">("all"); // Default to "all" filter
+  const [showResolved, setShowResolved] = useState(true); // Default to showing all tickets including resolved
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
@@ -58,9 +58,11 @@ export const useAdminDashboard = () => {
       return ticket.status === filter;
     });
   
+  console.log("Filtered tickets:", filteredTickets);
+  
   // Count tickets by status
   const countByStatus: TicketStatusCounts = {
-    all: tickets.filter(ticket => showResolved || (ticket.status !== "resolved" && ticket.status !== "closed")).length,
+    all: tickets.length,
     open: tickets.filter(ticket => ticket.status === "open").length,
     inProgress: tickets.filter(ticket => ticket.status === "inProgress").length,
     resolved: tickets.filter(ticket => ticket.status === "resolved").length,
