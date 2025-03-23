@@ -30,12 +30,15 @@ const AdminLogin: React.FC = () => {
     setIsLoading(true);
     
     try {
+      // Normalize email to lowercase
+      const normalizedEmail = email.trim().toLowerCase();
+      
       // First check if email exists in admin_credentials table
-      console.log("Checking if email exists in admin_credentials:", email);
+      console.log("Checking if email exists in admin_credentials:", normalizedEmail);
       const { data: adminData, error: adminError } = await supabase
         .from('admin_credentials')
         .select('email')
-        .eq('email', email.trim().toLowerCase());
+        .eq('email', normalizedEmail);
       
       if (adminError) {
         console.error("Admin check error:", adminError);
@@ -54,7 +57,7 @@ const AdminLogin: React.FC = () => {
       
       // If the email is in the admin table, proceed with authentication
       const { data, error: loginError } = await supabase.auth.signInWithPassword({
-        email,
+        email: normalizedEmail,
         password
       });
       
