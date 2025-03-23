@@ -32,7 +32,7 @@ const AdminLogin: React.FC = () => {
     
     try {
       // Normalize email to lowercase
-      const normalizedEmail = email.trim().toLowerCase();
+      let normalizedEmail = email.trim().toLowerCase();
       
       // First check if email exists in admin_credentials table
       console.log("Checking if email exists in admin_credentials:", normalizedEmail);
