@@ -46,7 +46,7 @@ const TicketActionButtons: React.FC<TicketActionButtonsProps> = ({
     }
   };
   
-  // Only show action buttons if ticket is not resolved or closed
+  // Only show action buttons if ticket is not closed
   if (ticket.status === "closed") {
     return null;
   }

@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, ReactNode } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Ticket, TicketContextType } from "@/types/ticket";
@@ -138,7 +137,7 @@ export const TicketProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
   };
 
-  // Function to delete multiple tickets with improved state management
+  // Improved function to delete multiple tickets with persistent state
   const deleteTickets = async (ticketIds: string[]): Promise<void> => {
     try {
       // Delete from database
@@ -151,7 +150,7 @@ export const TicketProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       
       // Store the deleted ticket IDs in localStorage to prevent them from reappearing on refresh
       const deletedTicketsInStorage = JSON.parse(localStorage.getItem('deletedTickets') || '[]');
-      const updatedDeletedTickets = [...deletedTicketsInStorage, ...ticketIds];
+      const updatedDeletedTickets = [...new Set([...deletedTicketsInStorage, ...ticketIds])];
       localStorage.setItem('deletedTickets', JSON.stringify(updatedDeletedTickets));
       
       toast({
@@ -168,16 +167,6 @@ export const TicketProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       throw error;
     }
   };
-
-  // Apply the deleted tickets filter on initial load
-  useEffect(() => {
-    const deletedTicketsInStorage = JSON.parse(localStorage.getItem('deletedTickets') || '[]');
-    if (deletedTicketsInStorage.length > 0 && tickets.length > 0) {
-      setTickets(prevTickets => 
-        prevTickets.filter(ticket => !deletedTicketsInStorage.includes(ticket.id))
-      );
-    }
-  }, [tickets.length]);
 
   return (
     <TicketContext.Provider value={{ 

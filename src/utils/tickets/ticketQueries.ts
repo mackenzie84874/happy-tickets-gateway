@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Ticket } from "@/types/ticket";
 
@@ -43,6 +44,12 @@ export const fetchTickets = async (): Promise<Ticket[]> => {
       rating: t.rating
     })));
     
+    // Filter out any permanently deleted tickets
+    const deletedTicketIds = JSON.parse(localStorage.getItem('deletedTickets') || '[]');
+    if (deletedTicketIds.length > 0) {
+      return tickets.filter(ticket => !deletedTicketIds.includes(ticket.id));
+    }
+    
     return tickets;
   }
   
@@ -62,6 +69,12 @@ export const fetchTicketById = async (id: string): Promise<Ticket | undefined> =
   }
 
   if (data) {
+    // Check if this ticket is in the deleted list
+    const deletedTicketIds = JSON.parse(localStorage.getItem('deletedTickets') || '[]');
+    if (deletedTicketIds.includes(data.id)) {
+      return undefined; // Return undefined for deleted tickets
+    }
+    
     return {
       ...data,
       // Keep the status exactly as it comes from the database
