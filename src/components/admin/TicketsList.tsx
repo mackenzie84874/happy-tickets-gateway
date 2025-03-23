@@ -19,6 +19,11 @@ const TicketsList: React.FC<TicketsListProps> = ({ tickets, filterType }) => {
     }
   };
 
+  // Filter tickets based on selected status if needed
+  const displayTickets = filterType === "all" 
+    ? tickets 
+    : tickets.filter(ticket => ticket.status === filterType);
+
   return (
     <div className="bg-card border rounded-lg shadow-sm overflow-hidden">
       <div className="p-6 border-b">
@@ -26,8 +31,8 @@ const TicketsList: React.FC<TicketsListProps> = ({ tickets, filterType }) => {
       </div>
       
       <div className="divide-y">
-        {tickets.length > 0 ? (
-          tickets.map((ticket: Ticket) => (
+        {displayTickets.length > 0 ? (
+          displayTickets.map((ticket: Ticket) => (
             <div key={ticket.id} className="p-4">
               <TicketCard ticket={ticket} />
             </div>
