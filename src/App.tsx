@@ -1,73 +1,37 @@
+import React from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Toaster } from "@/components/ui/toaster"
+import Index from "@/pages/Index";
+import SubmitTicket from "@/pages/SubmitTicket";
+import TicketSubmitted from "@/pages/TicketSubmitted";
+import AdminLogin from "@/pages/AdminLogin";
+import AdminDashboard from "@/pages/AdminDashboard";
+import NotFound from "@/pages/NotFound";
+import { TicketProvider } from "@/contexts/TicketContext";
+import { AnimatedTransition } from "@/components/AnimatedTransition";
+import MyTickets from "@/pages/MyTickets";
 
-import React from "react";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-
-// Pages
-import Index from "./pages/Index";
-import SubmitTicket from "./pages/SubmitTicket";
-import TicketSubmitted from "./pages/TicketSubmitted";
-import AdminLogin from "./pages/AdminLogin";
-import AdminDashboard from "./pages/AdminDashboard";
-import NotFound from "./pages/NotFound";
-
-// Components and Context
-import Navbar from "./components/Navbar";
-import AnimatedTransition from "./components/AnimatedTransition";
-import { TicketProvider } from "./contexts/TicketContext";
-
-// Create a new QueryClient instance
-const queryClient = new QueryClient();
-
-const App = () => (
-  <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
+function App() {
+  return (
+    <>
+      <BrowserRouter>
         <TicketProvider>
           <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Navbar />
+          <AnimatedTransition>
             <Routes>
-              <Route path="/" element={
-                <AnimatedTransition>
-                  <Index />
-                </AnimatedTransition>
-              } />
-              <Route path="/submit-ticket" element={
-                <AnimatedTransition>
-                  <SubmitTicket />
-                </AnimatedTransition>
-              } />
-              <Route path="/ticket-submitted" element={
-                <AnimatedTransition>
-                  <TicketSubmitted />
-                </AnimatedTransition>
-              } />
-              <Route path="/admin" element={
-                <AnimatedTransition>
-                  <AdminLogin />
-                </AnimatedTransition>
-              } />
-              <Route path="/admin/dashboard" element={
-                <AnimatedTransition>
-                  <AdminDashboard />
-                </AnimatedTransition>
-              } />
-              <Route path="*" element={
-                <AnimatedTransition>
-                  <NotFound />
-                </AnimatedTransition>
-              } />
+              <Route path="/" element={<Index />} />
+              <Route path="/submit-ticket" element={<SubmitTicket />} />
+              <Route path="/ticket-submitted" element={<TicketSubmitted />} />
+              <Route path="/my-tickets" element={<MyTickets />} />
+              <Route path="/admin" element={<AdminLogin />} />
+              <Route path="/admin/dashboard" element={<AdminDashboard />} />
+              <Route path="*" element={<NotFound />} />
             </Routes>
-          </BrowserRouter>
+          </AnimatedTransition>
         </TicketProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
-  </React.StrictMode>
-);
+      </BrowserRouter>
+    </>
+  );
+}
 
 export default App;

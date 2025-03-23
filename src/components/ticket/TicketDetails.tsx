@@ -107,6 +107,10 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({
       </CardContent>
       
       <CardFooter className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4 sm:justify-end">
+        <Link to="/my-tickets">
+          <Button variant="outline">My Tickets</Button>
+        </Link>
+        
         <Link to="/">
           <Button variant="outline">Return to Home</Button>
         </Link>
