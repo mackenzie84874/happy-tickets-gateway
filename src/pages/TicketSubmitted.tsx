@@ -80,6 +80,7 @@ const TicketSubmitted: React.FC = () => {
             isUpdating={isUpdating} 
             replies={replies}
             repliesLoading={repliesLoading}
+            showInlineRating={ticket.status === "closed" && (!ticket.rating || ticket.rating === 0)}
           />
         </div>
       </div>

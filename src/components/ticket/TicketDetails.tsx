@@ -15,13 +15,15 @@ interface TicketDetailsProps {
   isUpdating: boolean;
   replies: TicketReply[];
   repliesLoading: boolean;
+  showInlineRating?: boolean;
 }
 
 const TicketDetails: React.FC<TicketDetailsProps> = ({ 
   ticket, 
   isUpdating, 
   replies, 
-  repliesLoading 
+  repliesLoading,
+  showInlineRating = false
 }) => {
   return (
     <Card className={`shadow-sm transition-all duration-300 ${isUpdating ? 'ring-2 ring-primary animate-pulse' : ''}`}>
@@ -86,7 +88,14 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({
           </div>
         </div>
         
-        <TicketReplies replies={replies} isLoading={repliesLoading} />
+        <TicketReplies 
+          replies={replies} 
+          isLoading={repliesLoading} 
+          ticketId={ticket.id}
+          ticketStatus={ticket.status}
+          ticketRating={ticket.rating}
+          showInlineRating={showInlineRating}
+        />
       </CardContent>
       
       <CardFooter className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4 sm:justify-end">
