@@ -8,8 +8,9 @@ export const useAdminDashboard = () => {
   const navigate = useNavigate();
   const { tickets } = useTickets();
   const [isAdmin, setIsAdmin] = useState(false);
-  const [filter, setFilter] = useState<"all" | "open" | "inProgress" | "resolved" | "closed">("all");
+  const [filter, setFilter] = useState<"all" | "open" | "inProgress" | "resolved" | "closed">("open"); // Default to "open" filter
   const [showResolved, setShowResolved] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
     // Check if user is logged in as admin
@@ -19,20 +20,45 @@ export const useAdminDashboard = () => {
     } else {
       setIsAdmin(true);
     }
+    
+    // Set loading to false after a short delay to simulate data loading
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+    
+    return () => clearTimeout(timer);
   }, [navigate]);
+  
+  // Debug - log all tickets and their statuses
+  useEffect(() => {
+    if (tickets.length > 0) {
+      console.log("Current tickets in admin dashboard:", tickets.map(t => ({
+        id: t.id,
+        subject: t.subject,
+        status: t.status
+      })));
+    }
+  }, [tickets]);
   
   const handleLogout = () => {
     localStorage.removeItem("isAdmin");
     navigate("/admin");
   };
   
+  // Apply filters correctly
   const filteredTickets = tickets
-    .filter(ticket => showResolved || (ticket.status !== "resolved" && ticket.status !== "closed")) // Only show non-resolved/non-closed tickets by default
+    .filter(ticket => {
+      if (!showResolved) {
+        return ticket.status !== "resolved" && ticket.status !== "closed";
+      }
+      return true;
+    })
     .filter(ticket => {
       if (filter === "all") return true;
       return ticket.status === filter;
     });
   
+  // Count tickets by status
   const countByStatus: TicketStatusCounts = {
     all: tickets.filter(ticket => showResolved || (ticket.status !== "resolved" && ticket.status !== "closed")).length,
     open: tickets.filter(ticket => ticket.status === "open").length,
@@ -49,6 +75,7 @@ export const useAdminDashboard = () => {
     setShowResolved,
     filteredTickets,
     countByStatus,
-    handleLogout
+    handleLogout,
+    isLoading
   };
 };

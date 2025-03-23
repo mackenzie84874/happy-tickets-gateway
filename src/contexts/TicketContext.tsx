@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, ReactNode } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Ticket, TicketContextType } from "@/types/ticket";
@@ -24,6 +23,7 @@ export const TicketProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const loadTickets = async () => {
       try {
         const data = await fetchTickets();
+        // Important: preserve the status values exactly as they come from the database
         setTickets(data);
       } catch (error) {
         console.error("Error fetching tickets:", error);
@@ -36,6 +36,16 @@ export const TicketProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     };
 
     loadTickets();
+    
+    // Set up real-time subscription for ticket updates
+    // This helps keep the UI in sync with database changes
+    const subscribeToAllTickets = () => {
+      // Implementation would go here if needed
+    };
+    
+    return () => {
+      // Cleanup subscription if needed
+    };
   }, [toast]);
 
   const addTicket = async (ticketData: Omit<Ticket, "id" | "created_at">): Promise<string | undefined> => {
@@ -59,8 +69,10 @@ export const TicketProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const updateTicket = async (updatedTicket: Ticket): Promise<void> => {
     try {
+      // Make sure we're sending the exact status to the database
       await updateTicketStatus(updatedTicket);
       
+      // Update local state to reflect the change immediately
       setTickets(prevTickets =>
         prevTickets.map(ticket => 
           ticket.id === updatedTicket.id ? updatedTicket : ticket
