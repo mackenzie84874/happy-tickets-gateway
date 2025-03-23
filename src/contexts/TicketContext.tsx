@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, ReactNode } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Ticket, TicketContextType } from "@/types/ticket";
@@ -8,7 +7,8 @@ import {
   createTicket, 
   updateTicketStatus,
   subscribeToTicketUpdates,
-  createReply
+  createReply,
+  deleteTickets as deleteTicketsUtil
 } from "@/utils/tickets";
 
 // Create the context
@@ -137,6 +137,26 @@ export const TicketProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
   };
 
+  // Function to delete multiple tickets
+  const deleteTickets = async (ticketIds: string[]): Promise<void> => {
+    try {
+      await deleteTicketsUtil(ticketIds);
+      
+      // Update local state by removing deleted tickets
+      setTickets(prevTickets => 
+        prevTickets.filter(ticket => !ticketIds.includes(ticket.id))
+      );
+    } catch (error) {
+      console.error("Error deleting tickets:", error);
+      toast({
+        title: "Error deleting tickets",
+        description: "There was a problem deleting the selected tickets.",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
   return (
     <TicketContext.Provider value={{ 
       tickets, 
@@ -144,7 +164,8 @@ export const TicketProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       updateTicket, 
       getTicketById, 
       subscribeToTicket,
-      addReply
+      addReply,
+      deleteTickets
     }}>
       {children}
     </TicketContext.Provider>

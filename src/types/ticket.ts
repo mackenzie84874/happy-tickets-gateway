@@ -34,4 +34,5 @@ export interface TicketContextType {
   getTicketById: (id: string) => Promise<Ticket | undefined>;
   subscribeToTicket: (id: string, callback: (ticket: Ticket) => void) => () => void;
   addReply: (ticketId: string, adminName: string, message: string, isFromGuest?: boolean) => Promise<void>;
+  deleteTickets: (ticketIds: string[]) => Promise<void>;
 }

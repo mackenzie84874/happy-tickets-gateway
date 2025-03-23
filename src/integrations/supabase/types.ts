@@ -35,6 +35,7 @@ export type Database = {
           admin_name: string
           created_at: string
           id: string
+          is_from_guest: boolean | null
           message: string
           ticket_id: string
         }
@@ -42,6 +43,7 @@ export type Database = {
           admin_name: string
           created_at?: string
           id?: string
+          is_from_guest?: boolean | null
           message: string
           ticket_id: string
         }
@@ -49,6 +51,7 @@ export type Database = {
           admin_name?: string
           created_at?: string
           id?: string
+          is_from_guest?: boolean | null
           message?: string
           ticket_id?: string
         }

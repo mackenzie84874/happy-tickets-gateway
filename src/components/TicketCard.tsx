@@ -1,24 +1,52 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTickets } from "@/hooks/useTicketContext";
-import { Ticket } from "@/types/ticket";
+import { Ticket, TicketReply } from "@/types/ticket";
 import { useToast } from "@/hooks/use-toast";
 import TicketReplyDialog from "@/components/admin/TicketReplyDialog";
 import TicketStatusBadge from "@/components/ticket/TicketStatusBadge";
 import TicketActionButtons from "@/components/ticket/TicketActionButtons";
 import TicketStatusButtons from "@/components/ticket/TicketStatusButtons";
+import { fetchReplies } from "@/utils/tickets/ticketReplies";
 
 interface TicketCardProps {
   ticket: Ticket;
+  isSelected?: boolean;
+  onToggleSelect?: (ticketId: string) => void;
 }
 
-const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
+const TicketCard: React.FC<TicketCardProps> = ({ 
+  ticket, 
+  isSelected = false,
+  onToggleSelect
+}) => {
   const { updateTicket, addReply } = useTickets();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isReplyOpen, setIsReplyOpen] = useState(false);
+  const [replies, setReplies] = useState<TicketReply[]>([]);
+  const [isLoadingReplies, setIsLoadingReplies] = useState(false);
   const { toast } = useToast();
+  
+  // Fetch replies when card is expanded
+  useEffect(() => {
+    if (isExpanded && replies.length === 0) {
+      const loadReplies = async () => {
+        setIsLoadingReplies(true);
+        try {
+          const fetchedReplies = await fetchReplies(ticket.id);
+          setReplies(fetchedReplies);
+        } catch (error) {
+          console.error("Failed to load replies:", error);
+        } finally {
+          setIsLoadingReplies(false);
+        }
+      };
+      
+      loadReplies();
+    }
+  }, [isExpanded, ticket.id, replies.length]);
   
   const handleStatusChange = async (newStatus: "open" | "inProgress" | "resolved" | "closed") => {
     // If ticket is already closed, don't allow status changes
@@ -88,10 +116,22 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
       <div 
         className={cn(
           "border rounded-lg bg-card shadow-sm overflow-hidden transition-all duration-300",
-          isExpanded ? "transform scale-[1.01]" : ""
+          isExpanded ? "transform scale-[1.01]" : "",
+          isSelected ? "ring-2 ring-primary" : ""
         )}
       >
         <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between">
+          {onToggleSelect && (
+            <div className="mr-3 flex items-center">
+              <input 
+                type="checkbox" 
+                checked={isSelected}
+                onChange={() => onToggleSelect(ticket.id)}
+                className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+              />
+            </div>
+          )}
+
           <div 
             onClick={toggleExpand}
             className="cursor-pointer flex-grow"
@@ -132,6 +172,48 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
             <div className="text-sm border-t pt-4 pb-3 whitespace-pre-wrap">
               {ticket.message}
             </div>
+            
+            {/* Display ticket replies */}
+            {replies.length > 0 && (
+              <div className="mt-4 border-t pt-4">
+                <h4 className="text-sm font-medium mb-3">Conversation History</h4>
+                <div className="space-y-3">
+                  {replies.map((reply) => (
+                    <div 
+                      key={reply.id}
+                      className={`p-3 rounded-lg text-sm ${
+                        reply.is_from_guest 
+                          ? "bg-blue-50 border border-blue-100" 
+                          : reply.admin_name === "System"
+                            ? "bg-gray-50 border border-gray-100"
+                            : "bg-green-50 border border-green-100"
+                      }`}
+                    >
+                      <div className="flex justify-between items-start mb-1">
+                        <div className="font-medium">
+                          {reply.is_from_guest 
+                            ? "Guest" 
+                            : reply.admin_name === "System"
+                              ? "System"
+                              : reply.admin_name}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(reply.created_at).toLocaleString()}
+                        </div>
+                      </div>
+                      <div className="whitespace-pre-wrap">{reply.message}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Loading state for replies */}
+            {isLoadingReplies && (
+              <div className="flex justify-center py-3">
+                <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full"></div>
+              </div>
+            )}
             
             <TicketStatusButtons 
               ticket={ticket}
