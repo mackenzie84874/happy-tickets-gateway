@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import TicketStatusBadge from "./TicketStatusBadge";
 import TicketStatusMessage from "./TicketStatusMessage";
 import TicketReplies from "./TicketReplies";
+import GuestReplyForm from "./GuestReplyForm";
 
 interface TicketDetailsProps {
   ticket: Ticket;
@@ -25,6 +26,9 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({
   repliesLoading,
   showInlineRating = false
 }) => {
+  // Don't show the reply form if the ticket is closed
+  const canReply = ticket.status !== "closed";
+
   return (
     <Card className={`shadow-sm transition-all duration-300 ${isUpdating ? 'ring-2 ring-primary animate-pulse' : ''}`}>
       <CardHeader>
@@ -96,6 +100,10 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({
           ticketRating={ticket.rating}
           showInlineRating={showInlineRating}
         />
+        
+        {canReply && (
+          <GuestReplyForm ticketId={ticket.id} guestName={ticket.name} />
+        )}
       </CardContent>
       
       <CardFooter className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4 sm:justify-end">

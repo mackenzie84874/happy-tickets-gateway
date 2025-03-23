@@ -5,17 +5,19 @@ import { TicketReply } from "@/types/ticket";
 export const createReply = async (
   ticketId: string, 
   adminName: string, 
-  message: string
+  message: string,
+  isFromGuest: boolean = false
 ): Promise<TicketReply | undefined> => {
-  console.log(`Creating reply for ticket ${ticketId} from ${adminName}`);
+  console.log(`Creating reply for ticket ${ticketId} from ${isFromGuest ? 'guest' : adminName}`);
   
   try {
     const { data, error } = await supabase
       .from('ticket_replies')
       .insert([{
         ticket_id: ticketId,
-        admin_name: adminName,
-        message: message
+        admin_name: isFromGuest ? `Guest (${adminName})` : adminName,
+        message: message,
+        is_from_guest: isFromGuest
       }])
       .select();
 

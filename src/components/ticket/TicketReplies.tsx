@@ -48,6 +48,7 @@ const TicketReplies: React.FC<TicketRepliesProps> = ({
       <div className="space-y-4">
         {replies.map((reply, index) => {
           const isSystemMessage = reply.admin_name === "System";
+          const isGuestReply = reply.is_from_guest || reply.admin_name.startsWith("Guest (");
           const isThankYouMessage = isSystemMessage && 
             reply.message.includes("Thank you for using our support") && 
             reply.message.includes("Please rate us");
@@ -56,12 +57,20 @@ const TicketReplies: React.FC<TicketRepliesProps> = ({
             <div 
               key={reply.id} 
               className={`p-4 rounded-lg ${
-                isSystemMessage ? "bg-secondary/20" : "bg-primary/10"
+                isSystemMessage 
+                  ? "bg-secondary/20" 
+                  : isGuestReply 
+                    ? "bg-blue-50 border border-blue-100" 
+                    : "bg-primary/10"
               }`}
             >
               <div className="flex justify-between items-start mb-2">
                 <div className="font-medium">
-                  {isSystemMessage ? "Support System" : reply.admin_name}
+                  {isSystemMessage 
+                    ? "Support System" 
+                    : isGuestReply 
+                      ? "You" 
+                      : reply.admin_name}
                 </div>
                 <div className="text-xs text-muted-foreground">
                   {format(new Date(reply.created_at), "PPp")}

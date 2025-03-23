@@ -16,6 +16,7 @@ export interface TicketReply {
   admin_name: string;
   message: string;
   created_at: string;
+  is_from_guest?: boolean;
 }
 
 export interface TicketStatusCounts {
@@ -32,5 +33,5 @@ export interface TicketContextType {
   updateTicket: (updatedTicket: Ticket) => void;
   getTicketById: (id: string) => Promise<Ticket | undefined>;
   subscribeToTicket: (id: string, callback: (ticket: Ticket) => void) => () => void;
-  addReply: (ticketId: string, adminName: string, message: string) => Promise<void>;
+  addReply: (ticketId: string, adminName: string, message: string, isFromGuest?: boolean) => Promise<void>;
 }
