@@ -9,7 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import TicketStatusBadge from "./TicketStatusBadge";
 import TicketStatusMessage from "./TicketStatusMessage";
 import TicketReplies from "./TicketReplies";
-import StarRating from "./StarRating";
 
 interface TicketDetailsProps {
   ticket: Ticket;
@@ -47,14 +46,6 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({
       </CardHeader>
       
       <CardContent className="space-y-4">
-        {/* Show rating component prominently when ticket is closed */}
-        {ticket.status === "closed" && (
-          <div className="p-4 bg-gray-50 rounded-lg border border-primary/20 shadow-sm mb-4">
-            <h3 className="text-lg font-medium text-center mb-3">Rate Our Support</h3>
-            <StarRating ticketId={ticket.id} initialRating={ticket.rating} />
-          </div>
-        )}
-        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <h3 className="text-sm font-medium text-muted-foreground">Name</h3>
