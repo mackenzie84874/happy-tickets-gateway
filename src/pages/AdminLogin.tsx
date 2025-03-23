@@ -63,7 +63,52 @@ const AdminLogin: React.FC = () => {
       
       if (loginError) {
         console.error("Login error details:", loginError);
-        throw loginError;
+        
+        // Check if it's a "User doesn't exist" error, we should create the account
+        if (loginError.message.includes("Email not confirmed") || 
+            loginError.message.includes("Invalid login credentials") ||
+            loginError.message.includes("Invalid email or password")) {
+          
+          console.log("User doesn't exist yet. Creating account...");
+          // First-time login: create user account
+          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+            email: normalizedEmail,
+            password
+          });
+          
+          if (signUpError) {
+            console.error("Sign up error:", signUpError);
+            throw new Error(`Failed to create account: ${signUpError.message}`);
+          }
+          
+          console.log("Account created successfully:", signUpData);
+          
+          // Now try to sign in with the newly created credentials
+          const { data: newSignInData, error: newSignInError } = await supabase.auth.signInWithPassword({
+            email: normalizedEmail,
+            password
+          });
+          
+          if (newSignInError) {
+            console.error("New sign in error:", newSignInError);
+            throw new Error(`Failed to log in with new account: ${newSignInError.message}`);
+          }
+          
+          if (newSignInData?.session) {
+            // Set admin session
+            localStorage.setItem("isAdmin", "true");
+            
+            toast({
+              title: "Account created and login successful",
+              description: "Welcome to the admin dashboard",
+            });
+            
+            navigate("/admin/dashboard");
+            return;
+          }
+        } else {
+          throw loginError;
+        }
       }
       
       if (data?.session) {
