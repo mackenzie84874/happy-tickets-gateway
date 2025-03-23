@@ -9,27 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      admin_credentials: {
-        Row: {
-          created_at: string | null
-          email: string
-          id: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          email: string
-          id?: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          email?: string
-          id?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       ticket_replies: {
         Row: {
           admin_name: string
@@ -62,38 +41,6 @@ export type Database = {
           },
         ]
       }
-      ticket_status_logs: {
-        Row: {
-          created_at: string | null
-          id: string
-          new_status: Database["public"]["Enums"]["ticket_status"] | null
-          old_status: Database["public"]["Enums"]["ticket_status"] | null
-          ticket_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          new_status?: Database["public"]["Enums"]["ticket_status"] | null
-          old_status?: Database["public"]["Enums"]["ticket_status"] | null
-          ticket_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          new_status?: Database["public"]["Enums"]["ticket_status"] | null
-          old_status?: Database["public"]["Enums"]["ticket_status"] | null
-          ticket_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ticket_status_logs_ticket_id_fkey"
-            columns: ["ticket_id"]
-            isOneToOne: false
-            referencedRelation: "tickets"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       tickets: {
         Row: {
           created_at: string
@@ -102,7 +49,7 @@ export type Database = {
           message: string
           name: string
           rating: number | null
-          status: Database["public"]["Enums"]["ticket_status"]
+          status: string
           subject: string
         }
         Insert: {
@@ -112,7 +59,7 @@ export type Database = {
           message: string
           name: string
           rating?: number | null
-          status?: Database["public"]["Enums"]["ticket_status"]
+          status?: string
           subject: string
         }
         Update: {
@@ -122,7 +69,7 @@ export type Database = {
           message?: string
           name?: string
           rating?: number | null
-          status?: Database["public"]["Enums"]["ticket_status"]
+          status?: string
           subject?: string
         }
         Relationships: []
@@ -132,28 +79,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      check_ticket_status: {
-        Args: {
-          ticket_id: string
-        }
-        Returns: string
-      }
-      force_update_ticket_status: {
-        Args: {
-          ticket_id: string
-          new_status: string
-        }
-        Returns: undefined
-      }
-      is_admin: {
-        Args: {
-          user_email: string
-        }
-        Returns: boolean
-      }
+      [_ in never]: never
     }
     Enums: {
-      ticket_status: "open" | "inProgress" | "resolved" | "closed"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never

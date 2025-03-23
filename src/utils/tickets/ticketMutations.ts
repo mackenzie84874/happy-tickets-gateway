@@ -60,7 +60,12 @@ export const updateTicketStatus = async (updatedTicket: Ticket): Promise<void> =
   const { error } = await supabase
     .from('tickets')
     .update({
-      status: validStatus
+      name: updatedTicket.name,
+      email: updatedTicket.email,
+      subject: updatedTicket.subject,
+      message: updatedTicket.message,
+      status: validStatus,
+      rating: updatedTicket.rating
     })
     .eq('id', updatedTicket.id);
 

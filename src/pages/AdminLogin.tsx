@@ -1,129 +1,41 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { AlertCircle, Info } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 
 const AdminLogin: React.FC = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const [email, setEmail] = useState("deleon.kelsey170430@gmail.com");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   
-  // Check if user is already logged in
-  useEffect(() => {
-    const isAdmin = localStorage.getItem("isAdmin");
-    if (isAdmin === "true") {
-      navigate("/admin/dashboard");
-    }
-  }, [navigate]);
-  
+  // For this demo, we use a simple admin credential check
+  // In a real app, you would use a proper authentication system
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     
     // Simple validation
-    if (!password) {
-      setError("Please enter your password");
-      return;
-    }
-    
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters");
+    if (!username || !password) {
+      setError("Please enter both username and password");
       return;
     }
     
     setIsLoading(true);
     
-    try {
-      // Since we're hardcoding the email, we don't need to check admin credentials
-      // Just try to sign in or create the account if it doesn't exist
-      
-      // First try to sign in
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-      
-      // If login fails, create the account
-      if (signInError) {
-        console.log("Login failed, attempting to create account:", signInError.message);
-        
-        if (password === "testing123") {
-          // Create the account with the default password
-          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-            email,
-            password
-          });
-          
-          if (signUpError) {
-            console.error("Account creation error:", signUpError);
-            throw new Error(`Failed to create account: ${signUpError.message}`);
-          }
-          
-          console.log("Account created successfully, attempting to sign in");
-          
-          // Try to sign in with the newly created account
-          const { data: newSignInData, error: newSignInError } = await supabase.auth.signInWithPassword({
-            email,
-            password
-          });
-          
-          if (newSignInError) {
-            if (newSignInError.message.includes("Email not confirmed")) {
-              // For a better user experience, we'll just proceed anyway
-              localStorage.setItem("isAdmin", "true");
-              toast({
-                title: "Admin access granted",
-                description: "Welcome to the admin dashboard",
-              });
-              navigate("/admin/dashboard");
-              return;
-            }
-            throw new Error(`Failed to log in: ${newSignInError.message}`);
-          }
-          
-          if (newSignInData?.session) {
-            // Set admin session
-            localStorage.setItem("isAdmin", "true");
-            toast({
-              title: "Login successful",
-              description: "Welcome to the admin dashboard",
-            });
-            navigate("/admin/dashboard");
-          }
-        } else {
-          // Wrong password
-          throw new Error("Invalid password. Please use the correct admin password.");
-        }
-      } else if (signInData?.session) {
-        // Successful login
-        localStorage.setItem("isAdmin", "true");
-        toast({
-          title: "Login successful",
-          description: "Welcome to the admin dashboard",
-        });
-        navigate("/admin/dashboard");
-      }
-    } catch (err: any) {
-      console.error("Login error:", err);
-      setError(err.message || "Authentication failed. Please try again.");
-      
-      toast({
-        title: "Login failed",
-        description: err.message || "Please check your credentials and try again",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+    // Fake API delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    // Simple hardcoded admin check for demo
+    if (username === "admin" && password === "admin123") {
+      // Set admin session
+      localStorage.setItem("isAdmin", "true");
+      navigate("/admin/dashboard");
+    } else {
+      setError("Invalid credentials. Try 'admin' and 'admin123'.");
     }
+    
+    setIsLoading(false);
   };
   
   return (
@@ -146,24 +58,18 @@ const AdminLogin: React.FC = () => {
                 </p>
               </div>
               
-              <Alert className="mb-4 bg-blue-50 border-blue-200">
-                <Info className="h-4 w-4 mr-2 text-blue-500" />
-                <AlertDescription>
-                  Using default admin account: {email}
-                </AlertDescription>
-              </Alert>
-              
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <label htmlFor="email" className="text-sm font-medium">
-                    Email
+                  <label htmlFor="username" className="text-sm font-medium">
+                    Username
                   </label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    disabled
-                    className="w-full bg-gray-50"
+                  <input
+                    id="username"
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="w-full px-4 py-3 rounded-lg border border-input bg-background transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:border-input"
+                    placeholder="Enter your username"
                   />
                 </div>
                 
@@ -173,35 +79,34 @@ const AdminLogin: React.FC = () => {
                       Password
                     </label>
                   </div>
-                  <Input
+                  <input
                     id="password"
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full"
+                    className="w-full px-4 py-3 rounded-lg border border-input bg-background transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:border-input"
                     placeholder="Enter your password"
                   />
                 </div>
                 
                 {error && (
-                  <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm flex items-center animate-slide-up">
-                    <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
+                  <div className="text-destructive text-sm font-medium animate-slide-up">
                     {error}
                   </div>
                 )}
                 
-                <Button
+                <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full py-3 px-8"
+                  className="w-full py-3 px-8 rounded-lg bg-primary text-primary-foreground text-sm font-medium transition-all hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none"
                 >
-                  {isLoading ? "Processing..." : "Log In"}
-                </Button>
-                
-                <div className="mt-2 text-center text-sm">
-                  <p className="text-muted-foreground">Default password: testing123</p>
-                </div>
+                  {isLoading ? "Logging in..." : "Log In"}
+                </button>
               </form>
+              
+              <div className="mt-6 text-center text-sm text-muted-foreground">
+                <p>For demo: Use "admin" and "admin123"</p>
+              </div>
             </div>
           </div>
         </div>
