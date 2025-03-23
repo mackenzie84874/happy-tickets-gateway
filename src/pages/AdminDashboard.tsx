@@ -73,7 +73,7 @@ const AdminDashboard: React.FC = () => {
           onFilterChange={setFilter}
         />
         
-        {tickets.length === 0 && !isLoading && (
+        {filteredTickets.length === 0 && !isLoading && (
           <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-3">
             <AlertTriangle className="h-5 w-5 text-yellow-500" />
             <p className="text-sm text-yellow-700">
